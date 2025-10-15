@@ -1,6 +1,5 @@
 # Laravel
 /node_modules
-/public/storage
 /storage/*.key
 /.phpunit.result.cache
 /.idea
