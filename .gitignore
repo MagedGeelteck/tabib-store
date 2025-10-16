@@ -1,28 +1,5 @@
 
 
-# Ignore runtime files and large directories
-/storage/
-/public/storage/
-/public/vendor/
-/vendor/
-/node_modules/
-.env
-.env.*
-
-# Editor and OS files
-/.idea/
-.vscode/
-.DS_Store
-
-# PHPStorm project files
-*.iml
-
-# Composer vendor cache
-/composer.lock
-
-# Ignore compiled assets
-/public/themes/*/public/
-/public/themes/*/storage/
 
 # Ignore logs and cache
 /storage/logs/
