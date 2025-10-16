@@ -28,7 +28,10 @@ $category_id=request()->segment(count(request()->segments()));
                                                 <source srcset="{{ RvMedia::getImageUrl($slider->image, null, false, RvMedia::getDefaultImage()) }}" media="(min-width: 1200px)" />
                                                 <source srcset="{{ RvMedia::getImageUrl($slider->image, null, false, RvMedia::getDefaultImage()) }}" media="(min-width: 768px)" />
                                                 <source srcset="{{ RvMedia::getImageUrl($slider->image, null, false, RvMedia::getDefaultImage()) }}" media="(max-height: 767px)" />
-                                                <img loading="lazy" src="{{ RvMedia::getImageUrl($slider->image, 1200, false, RvMedia::getDefaultImage()) }}" alt="slider" style="border-radius:10px; max-width: 100%;min-width: 300px;height: auto;">
+                                                <img loading="eager" decoding="async" width="1200" height="500" src="{{ RvMedia::getImageUrl($slider->image, 1200, false, RvMedia::getDefaultImage()) }}" alt="slider" style="border-radius:10px; max-width: 100%;min-width: 300px;height: auto;">
+                                                <noscript>
+                                                    <img src="{{ RvMedia::getImageUrl($slider->image, 1200, false, RvMedia::getDefaultImage()) }}" alt="slider" style="border-radius:10px; max-width: 100%;min-width: 300px;height: auto;">
+                                                </noscript>
                                             </picture>
                                     </div>
                                 </div>
@@ -165,11 +168,19 @@ box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
             <figure class="text-center">
             <img class="lazyload product-thumbnail__img"
                 loading="lazy"
+                decoding="async"
+                width="200"
+                height="200"
                 src="{{ RvMedia::getImageUrl($product->image, 300, false, RvMedia::getDefaultImage()) }}"
                 data-src="{{ RvMedia::getImageUrl($product->image, 600, false, RvMedia::getDefaultImage()) }}"
-                srcset="{{ RvMedia::getImageUrl($product->image, 300, false, RvMedia::getDefaultImage()) }} 300w, {{ RvMedia::getImageUrl($product->image, 600, false, RvMedia::getDefaultImage()) }} 600w, {{ RvMedia::getImageUrl($product->image, 900, false, RvMedia::getDefaultImage()) }} 900w"
+                data-srcset="{{ RvMedia::getImageUrl($product->image, 300, false, RvMedia::getDefaultImage()) }} 300w, {{ RvMedia::getImageUrl($product->image, 600, false, RvMedia::getDefaultImage()) }} 600w, {{ RvMedia::getImageUrl($product->image, 900, false, RvMedia::getDefaultImage()) }} 900w"
+                srcset="{{ RvMedia::getImageUrl($product->image, 300, false, RvMedia::getDefaultImage()) }} 300w"
                 sizes="(max-width: 600px) 100vw, 200px"
-            alt="{{ $product->name }}" style="max-height:299px;"> <figcaption>Test message</figcaption></figure>
+            alt="{{ $product->name }}" style="max-height:299px;"> 
+            <noscript>
+                <img src="{{ RvMedia::getImageUrl($product->image, 600, false, RvMedia::getDefaultImage()) }}" alt="{{ $product->name }}" width="200" height="200">
+            </noscript>
+            <figcaption>Test message</figcaption></figure>
 
         </div>
  <span class="ribbons">
