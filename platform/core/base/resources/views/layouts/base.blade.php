@@ -92,7 +92,7 @@
                     $containsArabic = preg_match('/[\x{0600}-\x{06FF}]/u', request()->getPathInfo()) || app()->getLocale() === 'ar';
 
                     // Use the Arabic site description provided by the user for the homepage
-                    $arabicSiteDescription = 'محل مختص بالاغذية الخاصة: منتجات خالي سكر، الرياضيين، دايت الكيتو، خالي من الجلوتين، خالي من اللاكتوز، نباتية، عالية البروتين.';
+                        $arabicSiteDescription = 'محل مختص بالاغذية الخاصة: منتجات (خالي سكر، الرياضيين، دايت الكيتو، خالي من الجلوتين، خالي من اللاكتوز، النباتية، عالية البروتين، قليل البروتين) Tabib Store';
 
                     if (request()->routeIs('public.index')) {
                         if ($containsArabic) {
