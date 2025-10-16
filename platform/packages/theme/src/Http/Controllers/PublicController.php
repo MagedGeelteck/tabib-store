@@ -11,6 +11,7 @@ use Botble\Theme\Events\RenderingSiteMapEvent;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Arr;
 use Botble\SeoHelper\Facades\SeoHelper;
+use Botble\SeoHelper\SeoOpenGraph;
 use Botble\Theme\Facades\SiteMapManager;
 use Botble\Slug\Facades\SlugHelper;
 use Botble\Theme\Facades\Theme;
@@ -34,12 +35,29 @@ class PublicController extends Controller
             }
         }
 
-    // Prefer a user-friendly, keyword-aware homepage title and description
+    // Prefer a user-friendly, keyword-aware homepage title and description (Arabic + brand)
     $siteName = theme_option('site_title') ?: setting('admin_title', config('core.base.general.base_name'));
-    $homeTitle = $siteName . ' — Online Pharmacy & Health Products in Jordan';
-    $homeDescription = 'Tabib brings trusted medicines, health products and medical supplies to your doorstep in Amman and across Jordan. Fast delivery, certified products, and great prices.';
+    $homeTitle = 'محل مختص بالاغذية الخاصة — خالي سكر، كيتو، خالي من الجلوتين | ' . $siteName;
+    $homeDescription = 'محل مختص بالاغذية الخاصة: منتجات خالي سكر، للرياضيين، دايت كيتو، خالي من الجلوتين، خالي من اللاكتوز، نباتية، عالية البروتين، قليل البروتين. توصيل سريع داخل عمان والاردن.';
 
     SeoHelper::setTitle($homeTitle)->setDescription($homeDescription);
+
+    // Ensure OpenGraph has clear title/description/image for social previews and SEO analyzers
+    try {
+        $og = new SeoOpenGraph();
+        $og->setTitle($homeTitle)
+            ->setDescription($homeDescription)
+            ->setUrl(route('public.index'));
+
+        // Use theme logo if available as OG image
+        if ($logo = theme_option('logo')) {
+            $og->setImage(RvMedia::url($logo));
+        }
+
+        SeoHelper::setSeoOpenGraph($og);
+    } catch (\Exception $e) {
+        // non-fatal: continue without OG defaults
+    }
 
         Theme::breadcrumb()->add(__('Home'), route('public.index'));
 
