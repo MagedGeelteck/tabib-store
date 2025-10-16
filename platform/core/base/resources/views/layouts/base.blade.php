@@ -151,10 +151,10 @@
     }
 
     </style>
-</head>
-<body @if (BaseHelper::adminLanguageDirection() == 'rtl') dir="rtl" @endif class="@yield('body-class', 'page-sidebar-closed-hide-logo page-content-white page-container-bg-solid') {{ session()->get('sidebar-menu-toggle') ? 'page-sidebar-closed' : '' }}" style="@yield('body-style')">
-
+    {{-- Allow themes/packages to inject additional head HTML (e.g. SeoHelper::render()) --}}
     {!! apply_filters(BASE_FILTER_HEADER_LAYOUT_TEMPLATE, null) !!}
+</head>
+<body @if (BaseHelper::adminLanguageDirection() == 'rtl') dir="rtl" @endif class="@yield('body-class', 'page-sidebar-closed-hide-logo page-container-bg-solid') {{ session()->get('sidebar-menu-toggle') ? 'page-sidebar-closed' : '' }}" style="@yield('body-style')">
 
     <div id="app">
         @yield('page')
