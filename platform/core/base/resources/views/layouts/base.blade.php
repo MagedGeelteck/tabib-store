@@ -12,16 +12,37 @@
 
     @php
         $title = page_title()->getTitle();
-        // Append a short keyword phrase for the homepage server-side so crawlers see it without JS
-        try {
-            if (request()->routeIs('public.index')) {
-                $kw = ' - Online Pharmacy & Health Products in Jordan';
-                if (strpos($title, $kw) === false) {
-                    $title .= $kw;
+        $siteName = setting('admin_title', config('core.base.general.base_name'));
+
+        // Ensure we only modify frontend pages (skip admin area)
+        $isAdmin = request()->is('admin*') || request()->routeIs('admin.*');
+
+        if (! $isAdmin) {
+            // keywords to look for in titles (case-insensitive)
+            $keywords = [
+                'online pharmacy', 'health products', 'medicines', 'medical supplies', 'jordan', 'amman', 'tabib'
+            ];
+
+            $hasKeyword = false;
+            foreach ($keywords as $k) {
+                if (stripos($title, $k) !== false) {
+                    $hasKeyword = true;
+                    break;
                 }
             }
-        } catch (\Exception $e) {
-            // ignore
+
+            // If no keyword found in title, append a primary phrase + site name for SEO clarity
+            if (! $hasKeyword) {
+                $append = ' - Online Pharmacy & Health Products in Jordan';
+                if (stripos($title, $append) === false) {
+                    $title = trim($title) . $append . ' | ' . $siteName;
+                }
+            } else {
+                // Always ensure site name is present
+                if (stripos($title, $siteName) === false) {
+                    $title = trim($title) . ' | ' . $siteName;
+                }
+            }
         }
     @endphp
     <title>{{ $title }}</title>
@@ -48,6 +69,40 @@
     <meta property="og:url" content="{{ $canonical }}">
     <meta property="og:site_name" content="{{ setting('admin_title', config('core.base.general.base_name')) }}">
     <meta property="og:type" content="website">
+    @php
+        // Determine a social image - prefer theme/social_image setting if exists, else admin logo, else site logo
+        $socialImage = null;
+        if (function_exists('theme_option') && theme_option('social_image')) {
+            $socialImage = RvMedia::getImageUrl(theme_option('social_image'));
+        }
+        if (! $socialImage && setting('admin_logo')) {
+            $socialImage = RvMedia::getImageUrl(setting('admin_logo'));
+        }
+        if (! $socialImage && config('core.base.general.logo')) {
+            $socialImage = url(config('core.base.general.logo'));
+        }
+        // Fallback to a placeholder if still empty
+        $socialImage = $socialImage ?: asset('themes/farmart/images/placeholder.png');
+
+        // Optional: attempt to read image dimensions if RvMedia supports size retrieval (best-effort)
+        $socialW = null; $socialH = null;
+        try {
+            if (function_exists('RvMedia') && method_exists(RvMedia::class, 'getImageSize')) {
+                $size = RvMedia::getImageSize($socialImage);
+                if (!empty($size['width'])) $socialW = $size['width'];
+                if (!empty($size['height'])) $socialH = $size['height'];
+            }
+        } catch (\Exception $e) {
+            // ignore
+        }
+    @endphp
+    <meta property="og:image" content="{{ $socialImage }}">
+    @if($socialW && $socialH)
+        <meta property="og:image:width" content="{{ $socialW }}">
+        <meta property="og:image:height" content="{{ $socialH }}">
+    @endif
+    <meta name="twitter:image" content="{{ $socialImage }}">
+    <meta property="og:locale" content="{{ app()->getLocale() }}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $title }}">
     <meta name="twitter:description" content="{{ strip_tags(trans('core/base::layouts.copyright', ['year' => now()->format('Y'), 'company' => setting('admin_title', config('core.base.general.base_name')), 'version' => get_cms_version()])) }}">
