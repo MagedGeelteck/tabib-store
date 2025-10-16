@@ -1,71 +1,68 @@
+
 @php
-    // Get what SeoHelper already has (if anything)
-    $seoTitle = rescue(fn() => SeoHelper::getTitle());
-    $seoDescription = rescue(fn() => SeoHelper::getDescription());
-
-    // Compute a friendly, localized fallback if SeoHelper didn't provide one.
-    $siteName = theme_option('site_title') ?: setting('admin_title', config('core.base.general.base_name'));
-
-    // Minimal keyword set for detection (kept concise to avoid excessive checks)
-    $keywords = ['online pharmacy', 'pharmacy', 'health products', 'Tabib', 'Amman', 'صيدلية', 'منتجات صحية', 'عمان'];
-
-    $titleSource = $seoTitle ?: page_title()->getTitle();
-
-    $hasKeyword = false;
-    foreach ($keywords as $k) {
-        if (! empty($k) && stripos($titleSource, $k) !== false) {
-            $hasKeyword = true;
-            break;
-        }
-    }
-
-    $containsArabic = preg_match('/[\x{0600}-\x{06FF}]/u', $titleSource) || app()->getLocale() === 'ar';
-    // Page-type-specific keyword phrase
-    if (request()->routeIs('public.index')) {
-        $primaryPhrase = $containsArabic ? 'محل مختص بالاغذية الخاصة' : 'Online Pharmacy & Health Products';
-    } elseif (request()->routeIs('public.products') || request()->routeIs('public.product')) {
-        $primaryPhrase = $containsArabic ? 'منتجات صحية في الأردن' : 'Health Products in Jordan';
-    } elseif (request()->routeIs('public.cart') || request()->routeIs('public.profile')) {
-        $primaryPhrase = $containsArabic ? 'منتجات صحية، أدوية، توصيل سريع' : 'Medicines, Health Products, Fast Delivery';
-    } else {
-        $primaryPhrase = $containsArabic ? 'منتجات صحية' : 'Health Products';
-    }
-
-    $computedTitle = trim($titleSource ?: $siteName);
-    if (! $hasKeyword || mb_strlen(strip_tags($computedTitle)) < 30) {
-        if ($computedTitle && stripos($computedTitle, $primaryPhrase) === false) {
-            $computedTitle = $primaryPhrase . ' — ' . $computedTitle;
-        }
-        if (stripos($computedTitle, $siteName) === false) {
-            $computedTitle = $computedTitle . ' | ' . $siteName;
-        }
-    } else {
-        if (stripos($computedTitle, $siteName) === false) {
-            $computedTitle = $computedTitle . ' | ' . $siteName;
-        }
-    }
-
-    // Description fallback
-    if ($seoDescription) {
-        $computedDescription = $seoDescription;
-    } else {
-        $primaryKeysEn = 'Online pharmacy, health products, fast delivery in Amman';
-        $primaryKeysAr = 'صيدلية أونلاين، منتجات صحية، توصيل سريع في عمان';
-        $pk = $containsArabic ? $primaryKeysAr : $primaryKeysEn;
-        $computedDescription = $pk . '. ' . ($containsArabic ? 'محل مختص بالاغذية الخاصة وتوصيل داخل عمان والاردن.' : "Trusted medicines and health products with fast delivery across Jordan.");
-        if (mb_strlen($computedDescription) > 160) {
-            $computedDescription = mb_substr($computedDescription, 0, 157) . '...';
-        }
-    }
+    // Force homepage SEO title/description for absolute control
+    $isHome = request()->routeIs('public.index');
 @endphp
 
-{{-- If SeoHelper didn't render a title/description, output our computed ones. --}}
-@if (empty(rescue(fn() => SeoHelper::getTitle())))
-    <title>{{ e($computedTitle) }}</title>
-@endif
+@if ($isHome)
+    <title>Buy Organic & Healthy Food Online in Jordan | Tabib Jo Store</title>
+    <meta name="description" content="Shop healthy, organic, sugar-free, and keto products online in Jordan. Fast delivery from Tabib Jo's trusted store.">
+@else
+    @php
+        // Get what SeoHelper already has (if anything)
+        $seoTitle = rescue(fn() => SeoHelper::getTitle());
+        $seoDescription = rescue(fn() => SeoHelper::getDescription());
 
-@if (empty(rescue(fn() => SeoHelper::getDescription())))
-    <meta name="description" content="{{ e($computedDescription) }}">
+        $siteName = theme_option('site_title') ?: setting('admin_title', config('core.base.general.base_name'));
+        $keywords = ['online pharmacy', 'pharmacy', 'health products', 'Tabib', 'Amman', 'صيدلية', 'منتجات صحية', 'عمان'];
+        $titleSource = $seoTitle ?: page_title()->getTitle();
+        $hasKeyword = false;
+        foreach ($keywords as $k) {
+            if (! empty($k) && stripos($titleSource, $k) !== false) {
+                $hasKeyword = true;
+                break;
+            }
+        }
+        $containsArabic = preg_match('/[\x{0600}-\x{06FF}]/u', $titleSource) || app()->getLocale() === 'ar';
+        if (request()->routeIs('public.products') || request()->routeIs('public.product')) {
+            $primaryPhrase = $containsArabic ? 'منتجات صحية في الأردن' : 'Health Products in Jordan';
+        } elseif (request()->routeIs('public.cart') || request()->routeIs('public.profile')) {
+            $primaryPhrase = $containsArabic ? 'منتجات صحية، أدوية، توصيل سريع' : 'Medicines, Health Products, Fast Delivery';
+        } else {
+            $primaryPhrase = $containsArabic ? 'منتجات صحية' : 'Health Products';
+        }
+        $computedTitle = trim($titleSource ?: $siteName);
+        if (! $hasKeyword || mb_strlen(strip_tags($computedTitle)) < 30) {
+            if ($computedTitle && stripos($computedTitle, $primaryPhrase) === false) {
+                $computedTitle = $primaryPhrase . ' — ' . $computedTitle;
+            }
+            if (stripos($computedTitle, $siteName) === false) {
+                $computedTitle = $computedTitle . ' | ' . $siteName;
+            }
+        } else {
+            if (stripos($computedTitle, $siteName) === false) {
+                $computedTitle = $computedTitle . ' | ' . $siteName;
+            }
+        }
+        // Description fallback
+        if ($seoDescription) {
+            $computedDescription = $seoDescription;
+        } else {
+            $primaryKeysEn = 'Online pharmacy, health products, fast delivery in Amman';
+            $primaryKeysAr = 'صيدلية أونلاين، منتجات صحية، توصيل سريع في عمان';
+            $pk = $containsArabic ? $primaryKeysAr : $primaryKeysEn;
+            $computedDescription = $pk . '. ' . ($containsArabic ? 'محل مختص بالاغذية الخاصة وتوصيل داخل عمان والاردن.' : "Trusted medicines and health products with fast delivery across Jordan.");
+            if (mb_strlen($computedDescription) > 160) {
+                $computedDescription = mb_substr($computedDescription, 0, 157) . '...';
+            }
+        }
+    @endphp
+    @if (empty(rescue(fn() => SeoHelper::getTitle())))
+        <title>{{ e($computedTitle) }}</title>
+    @endif
+    @if (empty(rescue(fn() => SeoHelper::getDescription())))
+        <meta name="description" content="{{ e($computedDescription) }}">
+    @endif
 @endif
 
 {!! SeoHelper::render() !!}
