@@ -1,4 +1,46 @@
-{!! SeoHelper::render() !!}
+@php
+    // Ensure SeoHelper has a keyword-aware title before rendering meta tags.
+    try {
+        $siteName = theme_option('site_title') ?: setting('admin_title');
+        $currentTitle = rescue(fn() => \Botble\SeoHelper\Facades\SeoHelper::getTitle()) ?: page_title()->getTitle(false) ?: $siteName;
+        $currentDescription = rescue(fn() => \Botble\SeoHelper\Facades\SeoHelper::getDescription());
+
+        $keywords = [
+            'online pharmacy', 'pharmacy', 'Tabib', 'Jordan', 'Amman',
+            'medicines', 'buy medicines', 'health products', 'medical supplies', 'vitamins', 'supplements',
+            'sugar-free', 'keto', 'diet', 'gluten free', 'lactose free', 'sports nutrition', 'high protein', 'low protein',
+            'صيدلية', 'ادوية', 'منتجات صحية', 'منتجات غذائية خاصة', 'خالي سكر', 'الرياضيين', 'دايت', 'كيتو',
+            'خالي من الجلوتين', 'خالي من اللاكتوز', 'نباتي', 'نباتية', 'عالية البروتين', 'قليل البروتين', 'عمان', 'الاردن'
+        ];
+
+        $hasKeyword = false;
+        foreach ($keywords as $k) {
+            if (!empty($k) && stripos($currentTitle, $k) !== false) {
+                $hasKeyword = true;
+                break;
+            }
+        }
+
+        // If title is short or missing keywords, append a natural phrase once.
+        if (! $hasKeyword || mb_strlen(strip_tags($currentTitle)) < 30) {
+            $append = ' - Online Pharmacy & Health Products in Jordan';
+            $newTitle = trim($currentTitle);
+            if (stripos($newTitle, trim($append)) === false) {
+                $newTitle .= $append;
+            }
+            if (stripos($newTitle, $siteName) === false) {
+                $newTitle .= ' | ' . $siteName;
+            }
+            \Botble\SeoHelper\Facades\SeoHelper::setTitle($newTitle);
+            if (empty($currentDescription)) {
+                \Botble\SeoHelper\Facades\SeoHelper::setDescription($siteName . ' - Your online source for trusted medicines and health products in Jordan.');
+            }
+        }
+    } catch (\Exception $e) {
+        // fail silently
+    }
+
+{!! \Botble\SeoHelper\Facades\SeoHelper::render() !!}
 
 @php
     // If SeoHelper didn't render OpenGraph image/title/description, output minimal defaults
