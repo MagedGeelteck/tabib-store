@@ -72,7 +72,11 @@ class PublicProductController
         if ($query && ! $request->ajax()) {
             $products = $productService->getProduct($request, null, null, $with);
 
-            SeoHelper::setTitle(__('Search result for ":query"', compact('query')));
+            $siteName = theme_option('site_title') ?: setting('admin_title', config('core.base.general.base_name'));
+            $searchTitle = sprintf('%s — Search results for "%s"', $siteName, $query);
+            $searchDescription = sprintf('Search results for "%s" at %s. Find medicines, health products, supplements and fast delivery in Amman and across Jordan.', $query, $siteName);
+
+            SeoHelper::setTitle($searchTitle)->setDescription($searchDescription);
 
             Theme::breadcrumb()
                 ->add(__('Home'), route('public.index'))
@@ -97,7 +101,11 @@ class PublicProductController
             return $this->ajaxFilterProductsResponse($products, $request, $response);
         }
 
-        SeoHelper::setTitle(__('Products'))->setDescription(__('Products'));
+    $siteName = theme_option('site_title') ?: setting('admin_title', config('core.base.general.base_name'));
+    $productsTitle = sprintf('Products & Health Supplies — Buy Medicines, Supplements in Jordan | %s', $siteName);
+    $productsDescription = 'Browse medicines, health products, supplements and medical supplies. Fast delivery in Amman and across Jordan.';
+
+    SeoHelper::setTitle($productsTitle)->setDescription($productsDescription);
 
         do_action(PRODUCT_MODULE_SCREEN_NAME);
 
