@@ -118,7 +118,11 @@
 
     {{-- SeoHelper will render meta / open graph / twitter tags via the theme header partial --}}
     {{-- Keep only description/robots/viewport/csrf here as base tags --}}
-    <meta name="robots" content="noindex,follow"/>
+    @if ($isAdmin)
+        <meta name="robots" content="noindex,follow"/>
+    @else
+        <meta name="robots" content="index,follow"/>
+    @endif
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
