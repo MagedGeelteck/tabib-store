@@ -51,15 +51,23 @@
                     }
                 }
 
-                // Strategy: if the title is very short (< 30 chars) or lacks any of the keywords,
-                // append a single, natural phrase that includes primary keywords + the site name.
-                // This avoids keyword-stuffing while ensuring Lighthouse finds relevant terms.
-                $primaryAppend = ' - Online Pharmacy & Health Products in Jordan';
+                // Strategy: if the title is short (< 30 chars) or lacks any of the keywords,
+                // add a single, natural localized phrase that includes primary keywords + the site name.
+                // Detect Arabic content in the title or current locale to choose the right phrase
+                $containsArabic = preg_match('/[\x{0600}-\x{06FF}]/u', $title) || app()->getLocale() === 'ar';
+
+                $primaryAppendEn = ' - Online Pharmacy & Health Products in Jordan';
+                $primaryAppendAr = ' - متجر طبيب للمنتجات الصحية في الأردن';
+
+                $primaryAppend = $containsArabic ? $primaryAppendAr : $primaryAppendEn;
+
                 if (! $hasKeyword || mb_strlen(strip_tags($title)) < 30) {
-                    if (stripos($title, trim($primaryAppend)) === false) {
+                    // Only append once and avoid duplicating the site name
+                    if ($title && stripos($title, trim($primaryAppend)) === false) {
                         $title = trim($title) . $primaryAppend;
                     }
-                    // Ensure site name appears once at the end
+
+                    // Ensure site name appears once at the end for branding
                     if (stripos($title, $siteName) === false) {
                         $title = trim($title) . ' | ' . $siteName;
                     }
@@ -73,13 +81,32 @@
                 // If SeoHelper didn't set a description, provide a friendly default for the homepage
                 // and a concise generic description for other pages missing one.
                 if (empty($description)) {
+                    // Primary keywords to place early in description (localized)
+                    $primaryKeywordsEn = 'Online pharmacy, health products, fast delivery in Amman';
+                    $primaryKeywordsAr = 'صيدلية أونلاين، منتجات صحية، توصيل سريع في عمان';
+
+                    $containsArabic = preg_match('/[\x{0600}-\x{06FF}]/u', request()->getPathInfo()) || app()->getLocale() === 'ar';
+
                     // Use the Arabic site description provided by the user for the homepage
-                    $arabicSiteDescription = 'محل مختص بالاغذية الخاصة: منتجات (خالي سكر، الرياضيين، دايت الكيتو، خالي من الجلوتين، خالي من اللاكتوز، النباتية، عالية البروتين، قليل البروتين)';
+                    $arabicSiteDescription = 'محل مختص بالاغذية الخاصة: منتجات خالي سكر، الرياضيين، دايت الكيتو، خالي من الجلوتين، خالي من اللاكتوز، نباتية، عالية البروتين.';
 
                     if (request()->routeIs('public.index')) {
-                        $description = "Tabib - your trusted online pharmacy in Jordan. Fast delivery in Amman, trusted medicines, and a wide range of health products. " . $arabicSiteDescription;
+                        if ($containsArabic) {
+                            $description = "{$primaryKeywordsAr} — {$arabicSiteDescription} " . $siteName;
+                        } else {
+                            $description = "{$primaryKeywordsEn}. Trusted medicines and health products at {$siteName}. Fast delivery across Jordan.";
+                        }
                     } else {
-                        $description = "Shop trusted medicines, health products, and medical supplies at Tabib. Fast delivery across Jordan and helpful customer support. " . $arabicSiteDescription;
+                        if ($containsArabic) {
+                            $description = "{$primaryKeywordsAr} — {$arabicSiteDescription} " . $siteName;
+                        } else {
+                            $description = "{$primaryKeywordsEn}. Shop trusted medicines and medical supplies at {$siteName}. Fast delivery in Jordan.";
+                        }
+                    }
+
+                    // Ensure description is not overly long (truncate softly)
+                    if (mb_strlen($description) > 160) {
+                        $description = mb_substr($description, 0, 157) . '...';
                     }
                 }
         }
