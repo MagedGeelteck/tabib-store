@@ -222,6 +222,7 @@
         <link rel="stylesheet" href="{{ asset('vendor/core/core/base/css/rtl.css') }}">
     @endif
 
+    {{-- Allow direct injection of SEO tags from child views (e.g. homepage) --}}
     @yield('head')
 
     @stack('header')
