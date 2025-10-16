@@ -1,10 +1,26 @@
 
-RewriteEngine On
-RewriteCond %{HTTPS} !=on
-RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-
-
 <IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Canonicalize host to non-www and enforce HTTPS (301)
+    # - Redirect www.example.com -> https://example.com
+    # - Redirect http -> https preserving host (supports X-Forwarded-Proto)
+    # Allow Let's Encrypt ACME challenge through to avoid breaking cert renewal
+    RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/ [NC]
+
+    # If the host begins with www., redirect to non-www
+    RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+    RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
+
+    # If not HTTPS (consider reverse proxies like Cloudflare)
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
     </IfModule>
