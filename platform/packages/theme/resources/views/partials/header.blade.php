@@ -39,6 +39,7 @@
     } catch (\Exception $e) {
         // fail silently
     }
+@endphp
 
 {!! \Botble\SeoHelper\Facades\SeoHelper::render() !!}
 
