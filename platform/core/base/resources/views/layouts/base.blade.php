@@ -55,28 +55,29 @@
                     }
                 }
 
-                // Strategy: if the title is short (< 30 chars) or lacks any of the keywords,
-                // add a single, natural localized phrase that includes primary keywords + the site name.
-                // Detect Arabic content in the title or current locale to choose the right phrase
+                // Improved normalization: prepend a natural keyword phrase for short/generic titles
                 $containsArabic = preg_match('/[\x{0600}-\x{06FF}]/u', $title) || app()->getLocale() === 'ar';
 
-                $primaryAppendEn = ' - Online Pharmacy & Health Products in Jordan';
-                $primaryAppendAr = ' - متجر طبيب للمنتجات الصحية في الأردن';
+                // Page-type-specific keyword phrase
+                if (request()->routeIs('public.index')) {
+                    $primaryPhrase = $containsArabic ? 'محل مختص بالاغذية الخاصة' : 'Online Pharmacy & Health Products';
+                } elseif (request()->routeIs('public.products') || request()->routeIs('public.product')) {
+                    $primaryPhrase = $containsArabic ? 'منتجات صحية في الأردن' : 'Health Products in Jordan';
+                } elseif (request()->routeIs('public.cart') || request()->routeIs('public.profile')) {
+                    $primaryPhrase = $containsArabic ? 'منتجات صحية، أدوية، توصيل سريع' : 'Medicines, Health Products, Fast Delivery';
+                } else {
+                    $primaryPhrase = $containsArabic ? 'منتجات صحية' : 'Health Products';
+                }
 
-                $primaryAppend = $containsArabic ? $primaryAppendAr : $primaryAppendEn;
-
+                // If title is short or lacks keywords, prepend phrase
                 if (! $hasKeyword || mb_strlen(strip_tags($title)) < 30) {
-                    // Only append once and avoid duplicating the site name
-                    if ($title && stripos($title, trim($primaryAppend)) === false) {
-                        $title = trim($title) . $primaryAppend;
+                    if ($title && stripos($title, $primaryPhrase) === false) {
+                        $title = $primaryPhrase . ' — ' . trim($title);
                     }
-
-                    // Ensure site name appears once at the end for branding
                     if (stripos($title, $siteName) === false) {
-                        $title = trim($title) . ' | ' . $siteName;
+                        $title = $title . ' | ' . $siteName;
                     }
                 } else {
-                    // Has a keyword: still ensure the site name is appended for branding
                     if (stripos($title, $siteName) === false) {
                         $title = trim($title) . ' | ' . $siteName;
                     }

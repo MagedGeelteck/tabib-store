@@ -20,14 +20,21 @@
     }
 
     $containsArabic = preg_match('/[\x{0600}-\x{06FF}]/u', $titleSource) || app()->getLocale() === 'ar';
-    $primaryAppendEn = ' - Online Pharmacy & Health Products in Jordan';
-    $primaryAppendAr = ' - متجر طبيب للمنتجات الصحية في الأردن';
-    $primaryAppend = $containsArabic ? $primaryAppendAr : $primaryAppendEn;
+    // Page-type-specific keyword phrase
+    if (request()->routeIs('public.index')) {
+        $primaryPhrase = $containsArabic ? 'محل مختص بالاغذية الخاصة' : 'Online Pharmacy & Health Products';
+    } elseif (request()->routeIs('public.products') || request()->routeIs('public.product')) {
+        $primaryPhrase = $containsArabic ? 'منتجات صحية في الأردن' : 'Health Products in Jordan';
+    } elseif (request()->routeIs('public.cart') || request()->routeIs('public.profile')) {
+        $primaryPhrase = $containsArabic ? 'منتجات صحية، أدوية، توصيل سريع' : 'Medicines, Health Products, Fast Delivery';
+    } else {
+        $primaryPhrase = $containsArabic ? 'منتجات صحية' : 'Health Products';
+    }
 
     $computedTitle = trim($titleSource ?: $siteName);
     if (! $hasKeyword || mb_strlen(strip_tags($computedTitle)) < 30) {
-        if (stripos($computedTitle, trim($primaryAppend)) === false) {
-            $computedTitle = $computedTitle . $primaryAppend;
+        if ($computedTitle && stripos($computedTitle, $primaryPhrase) === false) {
+            $computedTitle = $primaryPhrase . ' — ' . $computedTitle;
         }
         if (stripos($computedTitle, $siteName) === false) {
             $computedTitle = $computedTitle . ' | ' . $siteName;
