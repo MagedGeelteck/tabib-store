@@ -30,39 +30,75 @@
         $isAdmin = request()->is('admin*') || request()->routeIs('admin.*');
 
     if (! $isAdmin) {
-            // keywords to look for in titles (case-insensitive)
-            $keywords = [
-                'online pharmacy', 'health products', 'medicines', 'medical supplies', 'jordan', 'amman', 'tabib'
-            ];
+                // A broader, practical set of keywords and natural-language fallbacks.
+                // These are used to detect whether a page title already contains relevant terms.
+                // Curated keyword set (English + Arabic) — concise, natural phrases to avoid stuffing
+                $keywords = [
+                    // English keywords
+                    'online pharmacy', 'pharmacy', 'Tabib', 'Jordan', 'Amman',
+                    'medicines', 'buy medicines', 'health products', 'medical supplies', 'vitamins', 'supplements',
+                    'sugar-free', 'keto', 'diet', 'gluten free', 'lactose free', 'sports nutrition', 'high protein', 'low protein',
+                    // Arabic keywords (natural phrases)
+                    'صيدلية', 'ادوية', 'منتجات صحية', 'منتجات غذائية خاصة', 'خالي سكر', 'الرياضيين', 'دايت', 'كيتو',
+                    'خالي من الجلوتين', 'خالي من اللاكتوز', 'نباتي', 'نباتية', 'عالية البروتين', 'قليل البروتين', 'عمان', 'الاردن'
+                ];
 
-            $hasKeyword = false;
-            foreach ($keywords as $k) {
-                if (stripos($title, $k) !== false) {
-                    $hasKeyword = true;
-                    break;
+                $hasKeyword = false;
+                foreach ($keywords as $k) {
+                    if (!empty($k) && stripos($title, $k) !== false) {
+                        $hasKeyword = true;
+                        break;
+                    }
                 }
-            }
 
-            // If no keyword found in title, append a primary phrase + site name for SEO clarity
-            if (! $hasKeyword) {
-                $append = ' - Online Pharmacy & Health Products in Jordan';
-                if (stripos($title, $append) === false) {
-                    $title = trim($title) . $append . ' | ' . $siteName;
+                // Strategy: if the title is very short (< 30 chars) or lacks any of the keywords,
+                // append a single, natural phrase that includes primary keywords + the site name.
+                // This avoids keyword-stuffing while ensuring Lighthouse finds relevant terms.
+                $primaryAppend = ' - Online Pharmacy & Health Products in Jordan';
+                if (! $hasKeyword || mb_strlen(strip_tags($title)) < 30) {
+                    if (stripos($title, trim($primaryAppend)) === false) {
+                        $title = trim($title) . $primaryAppend;
+                    }
+                    // Ensure site name appears once at the end
+                    if (stripos($title, $siteName) === false) {
+                        $title = trim($title) . ' | ' . $siteName;
+                    }
+                } else {
+                    // Has a keyword: still ensure the site name is appended for branding
+                    if (stripos($title, $siteName) === false) {
+                        $title = trim($title) . ' | ' . $siteName;
+                    }
                 }
-            } else {
-                // Always ensure site name is present
-                if (stripos($title, $siteName) === false) {
-                    $title = trim($title) . ' | ' . $siteName;
-                }
-            }
 
-            // If SeoHelper didn't set a description, provide a friendly default for homepage
-            if (empty($description) && request()->routeIs('public.index')) {
-                $description = "Tabib - your trusted online pharmacy in Jordan. Fast delivery in Amman, trusted medicines, and a wide range of health products.";
-            }
+                // If SeoHelper didn't set a description, provide a friendly default for the homepage
+                // and a concise generic description for other pages missing one.
+                if (empty($description)) {
+                    // Use the Arabic site description provided by the user for the homepage
+                    $arabicSiteDescription = 'محل مختص بالاغذية الخاصة: منتجات (خالي سكر، الرياضيين، دايت الكيتو، خالي من الجلوتين، خالي من اللاكتوز، النباتية، عالية البروتين، قليل البروتين)';
+
+                    if (request()->routeIs('public.index')) {
+                        $description = "Tabib - your trusted online pharmacy in Jordan. Fast delivery in Amman, trusted medicines, and a wide range of health products. " . $arabicSiteDescription;
+                    } else {
+                        $description = "Shop trusted medicines, health products, and medical supplies at Tabib. Fast delivery across Jordan and helpful customer support. " . $arabicSiteDescription;
+                    }
+                }
         }
     @endphp
-    <title>{{ $title }}</title>
+    @php
+        // If SeoHelper is available, push our computed title/description into it and
+        // let SeoHelper::render() (hooked by the theme header) output the final
+        // <title> and all meta tags. Otherwise, fall back to a plain <title>.
+        if (class_exists(\Botble\SeoHelper\Facades\SeoHelper::class)) {
+            try {
+                \Botble\SeoHelper\Facades\SeoHelper::setTitle($title)->setDescription($description);
+            } catch (\Exception $e) {
+                // if something goes wrong, fallback to printing title directly below
+                echo '<title>' . e($title) . '</title>';
+            }
+        } else {
+            echo '<title>' . e($title) . '</title>';
+        }
+    @endphp
     @php
         // Build a canonical URL for crawlers: use current path and exclude the `page` query param
         try {
