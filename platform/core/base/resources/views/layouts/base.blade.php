@@ -10,7 +10,37 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-    <title>{{ page_title()->getTitle() }}</title>
+    @php
+        $title = page_title()->getTitle();
+        // Append a short keyword phrase for the homepage server-side so crawlers see it without JS
+        try {
+            if (request()->routeIs('public.index')) {
+                $kw = ' - Online Pharmacy & Health Products in Jordan';
+                if (strpos($title, $kw) === false) {
+                    $title .= $kw;
+                }
+            }
+        } catch (\Exception $e) {
+            // ignore
+        }
+    @endphp
+    <title>{{ $title }}</title>
+    @php
+        // Build a canonical URL for crawlers: use current path and exclude the `page` query param
+        try {
+            $query = request()->query();
+            if (array_key_exists('page', $query)) {
+                unset($query['page']);
+            }
+            $canonical = url()->current();
+            if (!empty($query)) {
+                $canonical .= '?' . http_build_query($query);
+            }
+        } catch (\Exception $e) {
+            $canonical = url()->current();
+        }
+    @endphp
+    <link rel="canonical" href="{{ $canonical }}">
 
     <meta name="robots" content="noindex,follow"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
