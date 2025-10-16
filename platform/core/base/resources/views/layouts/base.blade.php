@@ -15,7 +15,11 @@
         $siteName = setting('admin_title', config('core.base.general.base_name'));
         try {
             if (class_exists(\Botble\SeoHelper\Facades\SeoHelper::class)) {
-                $title = \Botble\SeoHelper\Facades\SeoHelper::getTitle() ?: page_title()->getTitle();
+                // If controllers or plugins set an SEO title, normalize it here so
+                // short titles like "Shopping Cart" receive a localized, keyword-rich
+                // append and the site name for consistent branding.
+                $existingTitle = \Botble\SeoHelper\Facades\SeoHelper::getTitle();
+                $title = $existingTitle ?: page_title()->getTitle();
                 $description = \Botble\SeoHelper\Facades\SeoHelper::getDescription();
             } else {
                 $title = page_title()->getTitle();
@@ -117,6 +121,8 @@
         // <title> and all meta tags. Otherwise, fall back to a plain <title>.
         if (class_exists(\Botble\SeoHelper\Facades\SeoHelper::class)) {
             try {
+                // Re-set the normalized title back into SeoHelper so any earlier
+                // controller-set titles are improved.
                 \Botble\SeoHelper\Facades\SeoHelper::setTitle($title)->setDescription($description);
             } catch (\Exception $e) {
                 // if something goes wrong, fallback to printing title directly below
@@ -127,21 +133,51 @@
         }
     @endphp
     @php
-        // Build a canonical URL for crawlers: use current path and exclude the `page` query param
+        // Build a canonical URL for crawlers.
+        // Priority: use SeoHelper meta URL if set (page-specific canonical), otherwise use current URL.
+        // Always force canonical host/scheme to the canonical host to avoid www/http duplicates.
         try {
-            $query = request()->query();
+            $canonicalHost = 'tabib-jo.com';
+
+            // Prefer SeoHelper meta URL when available
+            if (class_exists(\Botble\SeoHelper\Facades\SeoHelper::class)) {
+                $metaUrl = rescue(fn() => \Botble\SeoHelper\Facades\SeoHelper::meta()->getUrl());
+            } else {
+                $metaUrl = null;
+            }
+
+            $source = $metaUrl ?: url()->full();
+
+            // Parse and rebuild to ensure canonical host + https
+            $parts = parse_url($source ?: url()->current());
+
+            $path = isset($parts['path']) ? $parts['path'] : '/';
+            $query = [];
+            if (isset($parts['query'])) {
+                parse_str($parts['query'], $query);
+            } else {
+                $query = request()->query();
+            }
+
+            // Remove pagination query param from canonical
             if (array_key_exists('page', $query)) {
                 unset($query['page']);
             }
-            $canonical = url()->current();
-            if (!empty($query)) {
+
+            // Normalize accidental /public/ in path
+            if (strpos($path, '/public/') === 0) {
+                $path = substr($path, 7) ?: '/';
+            }
+
+            $canonical = 'https://' . $canonicalHost . $path;
+            if (! empty($query)) {
                 $canonical .= '?' . http_build_query($query);
             }
         } catch (\Exception $e) {
             $canonical = url()->current();
         }
     @endphp
-    <link rel="canonical" href="{{ $canonical }}">
+    <link rel="canonical" href="{{ rtrim($canonical, '/') ?: 'https://tabib-jo.com' }}">
 
     {{-- SeoHelper will render meta / open graph / twitter tags via the theme header partial --}}
     {{-- Keep only description/robots/viewport/csrf here as base tags --}}
