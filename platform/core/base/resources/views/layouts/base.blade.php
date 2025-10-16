@@ -7,6 +7,9 @@
 <html lang="en">
 <!--<![endif]-->
 <head>
+    {{-- Always output normalized <title> and canonical link at the top of <head> for SEO robustness --}}
+    <title>{{ e($title) }}</title>
+    <link rel="canonical" href="{{ rtrim($canonical, '/') ?: 'https://tabib-jo.com' }}">
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 

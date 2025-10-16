@@ -51,9 +51,6 @@
 @endphp
 
 {{-- If SeoHelper didn't render a title/description, output our computed ones. --}}
-@if (empty(rescue(fn() => SeoHelper::getTitle())))
-    <title>{{ e($computedTitle) }}</title>
-@endif
 
 @if (empty(rescue(fn() => SeoHelper::getDescription())))
     <meta name="description" content="{{ e($computedDescription) }}">
