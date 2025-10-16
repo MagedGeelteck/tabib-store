@@ -55,14 +55,29 @@ class PageService
             $meta->setTitle($page->name);
             $meta->setDescription($page->description);
         } else {
-            $siteTitle = theme_option('seo_title') ? theme_option('seo_title') : theme_option('site_title');
-            $seoDescription = theme_option('seo_description');
+            // Use explicit theme SEO options when present, otherwise fall back to a
+            // strong Arabic, keyword-rich default suitable for the homepage.
+            $siteTitleOption = theme_option('seo_title') ?: theme_option('site_title');
+            $siteName = setting('admin_title', config('core.base.general.base_name')) ?: 'Tabib Store';
+
+            $defaultTitle = 'محل مختص بالاغذية الخاصة — خالي سكر، كيتو، خالي من الجلوتين | ' . $siteName;
+            $defaultDescription = 'محل مختص بالاغذية الخاصة: منتجات خالي سكر، للرياضيين، دايت كيتو، خالي من الجلوتين، خالي من اللاكتوز، نباتية، عالية البروتين، قليل البروتين. توصيل سريع داخل عمان والاردن.';
+
+            $siteTitle = $siteTitleOption ?: $defaultTitle;
+            $seoDescription = theme_option('seo_description') ?: $defaultDescription;
 
             SeoHelper::setTitle($siteTitle)
                 ->setDescription($seoDescription);
 
             $meta->setTitle($siteTitle);
             $meta->setDescription($seoDescription);
+
+            // If theme provides an OG image, use it; otherwise use the theme logo as a reasonable default.
+            if (theme_option('seo_og_image')) {
+                $meta->setImage(RvMedia::url(theme_option('seo_og_image')));
+            } elseif (theme_option('logo')) {
+                $meta->setImage(RvMedia::url(theme_option('logo')));
+            }
         }
 
         $meta->setUrl($page->url);
