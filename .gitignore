@@ -1,6 +1,16 @@
-
-
-
-# Ignore logs and cache
-/storage/logs/
-/storage/framework/
+# Laravel
+/vendor
+/node_modules
+/public/storage
+/storage/*.key
+/.env
+/.env.*
+/.phpunit.result.cache
+/.idea
+/.vscode
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+.DS_Store
+storage/*
