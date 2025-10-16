@@ -55,34 +55,31 @@
                     }
                 }
 
+                // Improved normalization: prepend a natural keyword phrase for short/generic titles
                 $containsArabic = preg_match('/[\x{0600}-\x{06FF}]/u', $title) || app()->getLocale() === 'ar';
 
-                // Homepage: force strong, unique, keyword-rich title/description
+                // Page-type-specific keyword phrase
                 if (request()->routeIs('public.index')) {
-                    $title = 'Buy Organic & Healthy Food Online in Jordan | Tabib Jo Store';
-                    $description = 'Shop healthy, organic, sugar-free, and keto products online in Jordan. Fast delivery from Tabib Jo\'s trusted store.';
+                    $primaryPhrase = $containsArabic ? 'محل مختص بالاغذية الخاصة' : 'Online Pharmacy & Health Products';
+                } elseif (request()->routeIs('public.products') || request()->routeIs('public.product')) {
+                    $primaryPhrase = $containsArabic ? 'منتجات صحية في الأردن' : 'Health Products in Jordan';
+                } elseif (request()->routeIs('public.cart') || request()->routeIs('public.profile')) {
+                    $primaryPhrase = $containsArabic ? 'منتجات صحية، أدوية، توصيل سريع' : 'Medicines, Health Products, Fast Delivery';
                 } else {
-                    // Page-type-specific keyword phrase
-                    if (request()->routeIs('public.products') || request()->routeIs('public.product')) {
-                        $primaryPhrase = $containsArabic ? 'منتجات صحية في الأردن' : 'Health Products in Jordan';
-                    } elseif (request()->routeIs('public.cart') || request()->routeIs('public.profile')) {
-                        $primaryPhrase = $containsArabic ? 'منتجات صحية، أدوية، توصيل سريع' : 'Medicines, Health Products, Fast Delivery';
-                    } else {
-                        $primaryPhrase = $containsArabic ? 'منتجات صحية' : 'Health Products';
-                    }
+                    $primaryPhrase = $containsArabic ? 'منتجات صحية' : 'Health Products';
+                }
 
-                    // If title is short or lacks keywords, prepend phrase
-                    if (! $hasKeyword || mb_strlen(strip_tags($title)) < 30) {
-                        if ($title && stripos($title, $primaryPhrase) === false) {
-                            $title = $primaryPhrase . ' — ' . trim($title);
-                        }
-                        if (stripos($title, $siteName) === false) {
-                            $title = $title . ' | ' . $siteName;
-                        }
-                    } else {
-                        if (stripos($title, $siteName) === false) {
-                            $title = trim($title) . ' | ' . $siteName;
-                        }
+                // If title is short or lacks keywords, prepend phrase
+                if (! $hasKeyword || mb_strlen(strip_tags($title)) < 30) {
+                    if ($title && stripos($title, $primaryPhrase) === false) {
+                        $title = $primaryPhrase . ' — ' . trim($title);
+                    }
+                    if (stripos($title, $siteName) === false) {
+                        $title = $title . ' | ' . $siteName;
+                    }
+                } else {
+                    if (stripos($title, $siteName) === false) {
+                        $title = trim($title) . ' | ' . $siteName;
                     }
                 }
 
@@ -222,7 +219,6 @@
         <link rel="stylesheet" href="{{ asset('vendor/core/core/base/css/rtl.css') }}">
     @endif
 
-    {{-- Allow direct injection of SEO tags from child views (e.g. homepage) --}}
     @yield('head')
 
     @stack('header')

@@ -1,7 +1,3 @@
-@section('head')
-    <title>Buy Organic & Healthy Food Online in Jordan | Tabib Jo Store</title>
-    <meta name="description" content="Shop healthy, organic, sugar-free, and keto products online in Jordan. Fast delivery from Tabib Jo's trusted store.">
-@endsection
 @php
 
 if(BaseHelper::siteLanguageDirection() == 'rtl'){
