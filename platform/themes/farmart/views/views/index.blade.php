@@ -25,15 +25,20 @@ $category_id=request()->segment(count(request()->segments()));
                                     <div class="slide-item__image">
                                     @php
                                      $slider=DB::table('simple_slider_items')->orderBy('id','DESC')->first();
-                                     @endphp
+                                     $sliderUrl = $slider ? RvMedia::getImageUrl($slider->image, null, false, RvMedia::getDefaultImage()) : null;
+                                    @endphp
+                                            {{-- Preload the slider LCP image to improve Largest Contentful Paint --}}
+                                            @if(!empty($sliderUrl))
+                                                <link rel="preload" as="image" href="{{ $sliderUrl }}">
+                                            @endif
                                             <picture>
-                                                <source srcset="{{ RvMedia::getImageUrl($slider->image, null, false, RvMedia::getDefaultImage()) }}" media="(min-width: 1200px)" />
-                                                <source srcset="{{ RvMedia::getImageUrl($slider->image, null, false, RvMedia::getDefaultImage()) }}" media="(min-width: 768px)" />
-                                                <source srcset="{{ RvMedia::getImageUrl($slider->image, null, false, RvMedia::getDefaultImage()) }}" media="(max-height: 767px)" />
-                                                {{-- Use original slider image URL to preserve original size if resized derivatives are not available --}}
-                                                <img loading="eager" decoding="async" src="{{$slider->image}}" alt="slider" style="border-radius:10px; max-width: 100%; min-width: 300px; height: auto;">
+                                                <source srcset="{{ $sliderUrl }}" media="(min-width: 1200px)" />
+                                                <source srcset="{{ $sliderUrl }}" media="(min-width: 768px)" />
+                                                <source srcset="{{ $sliderUrl }}" media="(max-height: 767px)" />
+                                                {{-- Use the optimized slider URL (fall back to raw path if needed) --}}
+                                                <img loading="eager" fetchpriority="high" decoding="async" src="{{ $sliderUrl ?: ($slider->image ?? '') }}" alt="slider" width="1600" height="900" style="border-radius:10px; width:100%; height:auto; aspect-ratio:16/9; object-fit:cover;">
                                                 <noscript>
-                                                    <img src="{{$slider->image}}" alt="slider" style="border-radius:10px; max-width: 100%; min-width: 300px; height: auto;">
+                                                    <img src="{{ $sliderUrl ?: ($slider->image ?? '') }}" alt="slider" width="1600" height="900" style="border-radius:10px; width:100%; height:auto; aspect-ratio:16/9; object-fit:cover;">
                                                 </noscript>
                                             </picture>
                                     </div>
@@ -81,12 +86,12 @@ box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
             <img class="lazyload product-thumbnail__img"
                 loading="lazy"
                 decoding="async"
+                fetchpriority="low"
                 width="200"
                 height="200"
-                src="/storage/compressed-images/{{ $product->image }}"
+                src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
                 data-src="/storage/compressed-images/{{ $product->image }}"
                 data-srcset="/storage/compressed-images/{{ $product->image }} 300w, /storage/compressed-images/{{ $product->image }} 600w"
-                srcset="/storage/compressed-images/{{ $product->image }} 300w"
                 sizes="(max-width: 600px) 100vw, 200px"
             alt="{{ $product->name }}" style="max-height:299px;"> 
             <noscript>
