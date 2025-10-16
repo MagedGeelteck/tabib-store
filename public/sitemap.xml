@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+    <!--
+        IMPORTANT: Replace https://example.com below with your real site URL (including https if your site uses HTTPS).
+        This static sitemap includes common high-level pages. For a fully dynamic sitemap, consider generating
+        one from your app routes/models (or use the platform/packages/sitemap package already in the codebase).
+    -->
+    <!-- generated: 2025-10-16 -->
+    <url>
+        <loc>https://example.com/</loc>
+        <lastmod>2025-10-16</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>1.00</priority>
+    </url>
+
+    <url>
+        <loc>https://example.com/products</loc>
+        <lastmod>2025-10-16</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.90</priority>
+    </url>
+
+    <url>
+        <loc>https://example.com/categories</loc>
+        <lastmod>2025-10-16</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.80</priority>
+    </url>
+
+    <url>
+        <loc>https://example.com/blog</loc>
+        <lastmod>2025-10-16</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.70</priority>
+    </url>
+
+    <url>
+        <loc>https://example.com/contact</loc>
+        <lastmod>2025-10-16</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.50</priority>
+    </url>
+
+    <!-- If you have a sitemaps index (multiple sitemap files), add them here instead. -->
+</urlset>

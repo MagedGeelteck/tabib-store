@@ -1,2 +1,14 @@
 User-agent: *
+Disallow: /admin/
+Disallow: /login
+Disallow: /register
+Disallow: /vendor/
+Disallow: /storage/
+
+# Allow everything else
+Allow: /
+
+# Sitemap location (replace example.com)
+Sitemap: https://example.com/sitemap.xml
+User-agent: *
 Disallow:
