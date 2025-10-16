@@ -5,17 +5,16 @@
 
     RewriteEngine On
 
-    # Redirect www to non-www (preserve scheme).
-    # Handle forwarded proto (Cloudflare/load balancer) via X-Forwarded-Proto if present.
+    # Force HTTPS and non-www canonical URL.
+    # If the request is not using HTTPS or includes www, redirect to https://example.com
+    # If request is for www.example.com -> redirect to https://example.com
     RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
-    RewriteCond %{HTTP:X-Forwarded-Proto} =https [OR]
-    RewriteCond %{HTTPS} on
     RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
 
-    RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+    # If request is not HTTPS (even for non-www), redirect to HTTPS preserving host
     RewriteCond %{HTTP:X-Forwarded-Proto} !=https
-    RewriteCond %{HTTPS} !on
-    RewriteRule ^ http://%1%{REQUEST_URI} [L,R=301]
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .

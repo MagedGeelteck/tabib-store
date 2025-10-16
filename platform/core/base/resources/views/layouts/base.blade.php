@@ -80,58 +80,11 @@
     @endphp
     <link rel="canonical" href="{{ $canonical }}">
 
-    {{-- Basic SEO meta tags --}}
-    <meta name="keywords" content="online pharmacy, health products, medicines, medical supplies, Amman, Jordan, tabib">
-    <meta property="og:title" content="{{ $title }}">
-    <meta property="og:url" content="{{ $canonical }}">
-    <meta property="og:site_name" content="{{ setting('admin_title', config('core.base.general.base_name')) }}">
-    <meta property="og:type" content="website">
-    @php
-        // Determine a social image - prefer theme/social_image setting if exists, else admin logo, else site logo
-        $socialImage = null;
-        if (function_exists('theme_option') && theme_option('social_image')) {
-            $socialImage = RvMedia::getImageUrl(theme_option('social_image'));
-        }
-        if (! $socialImage && setting('admin_logo')) {
-            $socialImage = RvMedia::getImageUrl(setting('admin_logo'));
-        }
-        if (! $socialImage && config('core.base.general.logo')) {
-            $socialImage = url(config('core.base.general.logo'));
-        }
-        // Fallback to a placeholder if still empty
-        $socialImage = $socialImage ?: asset('themes/farmart/images/placeholder.png');
-
-        // Optional: attempt to read image dimensions if RvMedia supports size retrieval (best-effort)
-        $socialW = null; $socialH = null;
-        try {
-            if (function_exists('RvMedia') && method_exists(RvMedia::class, 'getImageSize')) {
-                $size = RvMedia::getImageSize($socialImage);
-                if (!empty($size['width'])) $socialW = $size['width'];
-                if (!empty($size['height'])) $socialH = $size['height'];
-            }
-        } catch (\Exception $e) {
-            // ignore
-        }
-    @endphp
-    <meta property="og:image" content="{{ $socialImage }}">
-    @if($socialW && $socialH)
-        <meta property="og:image:width" content="{{ $socialW }}">
-        <meta property="og:image:height" content="{{ $socialH }}">
-    @endif
-    <meta name="twitter:image" content="{{ $socialImage }}">
-    <meta property="og:locale" content="{{ app()->getLocale() }}">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ $title }}">
-    <meta name="twitter:description" content="{{ $description ?: strip_tags(trans('core/base::layouts.copyright', ['year' => now()->format('Y'), 'company' => setting('admin_title', config('core.base.general.base_name')), 'version' => get_cms_version()])) }}">
-
+    {{-- SeoHelper will render meta / open graph / twitter tags via the theme header partial --}}
+    {{-- Keep only description/robots/viewport/csrf here as base tags --}}
     <meta name="robots" content="noindex,follow"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    @if (setting('admin_logo') || config('core.base.general.logo'))
-        <meta property="og:image" content="{{ setting('admin_logo') ? RvMedia::getImageUrl(setting('admin_logo')) : url(config('core.base.general.logo')) }}">
-    @endif
-    <meta name="description" content="{{ strip_tags(trans('core/base::layouts.copyright', ['year' => now()->format('Y'), 'company' => setting('admin_title', config('core.base.general.base_name')), 'version' => get_cms_version()])) }}">
-    <meta property="og:description" content="{{ strip_tags(trans('core/base::layouts.copyright', ['year' => now()->format('Y'), 'company' => setting('admin_title', config('core.base.general.base_name')), 'version' => get_cms_version()])) }}">
 
     @if (setting('admin_favicon') || config('core.base.general.favicon'))
         <link rel="icon shortcut" href="{{ setting('admin_favicon') ? RvMedia::getImageUrl(setting('admin_favicon'), 'thumb') : url(config('core.base.general.favicon')) }}">
