@@ -42,6 +42,16 @@
     @endphp
     <link rel="canonical" href="{{ $canonical }}">
 
+    {{-- Basic SEO meta tags --}}
+    <meta name="keywords" content="online pharmacy, health products, medicines, medical supplies, Amman, Jordan, tabib">
+    <meta property="og:title" content="{{ $title }}">
+    <meta property="og:url" content="{{ $canonical }}">
+    <meta property="og:site_name" content="{{ setting('admin_title', config('core.base.general.base_name')) }}">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $title }}">
+    <meta name="twitter:description" content="{{ strip_tags(trans('core/base::layouts.copyright', ['year' => now()->format('Y'), 'company' => setting('admin_title', config('core.base.general.base_name')), 'version' => get_cms_version()])) }}">
+
     <meta name="robots" content="noindex,follow"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
