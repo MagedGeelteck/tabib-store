@@ -11,13 +11,25 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
     @php
-        $title = page_title()->getTitle();
+        // Prefer SeoHelper values when present (Botble SeoHelper integration)
         $siteName = setting('admin_title', config('core.base.general.base_name'));
+        try {
+            if (class_exists(\Botble\SeoHelper\Facades\SeoHelper::class)) {
+                $title = \Botble\SeoHelper\Facades\SeoHelper::getTitle() ?: page_title()->getTitle();
+                $description = \Botble\SeoHelper\Facades\SeoHelper::getDescription();
+            } else {
+                $title = page_title()->getTitle();
+                $description = null;
+            }
+        } catch (\Exception $e) {
+            $title = page_title()->getTitle();
+            $description = null;
+        }
 
         // Ensure we only modify frontend pages (skip admin area)
         $isAdmin = request()->is('admin*') || request()->routeIs('admin.*');
 
-        if (! $isAdmin) {
+    if (! $isAdmin) {
             // keywords to look for in titles (case-insensitive)
             $keywords = [
                 'online pharmacy', 'health products', 'medicines', 'medical supplies', 'jordan', 'amman', 'tabib'
@@ -42,6 +54,11 @@
                 if (stripos($title, $siteName) === false) {
                     $title = trim($title) . ' | ' . $siteName;
                 }
+            }
+
+            // If SeoHelper didn't set a description, provide a friendly default for homepage
+            if (empty($description) && request()->routeIs('public.index')) {
+                $description = "Tabib - your trusted online pharmacy in Jordan. Fast delivery in Amman, trusted medicines, and a wide range of health products.";
             }
         }
     @endphp
@@ -105,7 +122,7 @@
     <meta property="og:locale" content="{{ app()->getLocale() }}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $title }}">
-    <meta name="twitter:description" content="{{ strip_tags(trans('core/base::layouts.copyright', ['year' => now()->format('Y'), 'company' => setting('admin_title', config('core.base.general.base_name')), 'version' => get_cms_version()])) }}">
+    <meta name="twitter:description" content="{{ $description ?: strip_tags(trans('core/base::layouts.copyright', ['year' => now()->format('Y'), 'company' => setting('admin_title', config('core.base.general.base_name')), 'version' => get_cms_version()])) }}">
 
     <meta name="robots" content="noindex,follow"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
