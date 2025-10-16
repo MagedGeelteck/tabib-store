@@ -1,45 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
     <!--
-        IMPORTANT: Replace https://example.com below with your real site URL (including https if your site uses HTTPS).
-        This static sitemap includes common high-level pages. For a fully dynamic sitemap, consider generating
-        one from your app routes/models (or use the platform/packages/sitemap package already in the codebase).
+        Static sitemap for https://tabib-jo.com
+        Note: for large sites generate a dynamic sitemap (sitemap index + per-section files).
+        This file contains the most important public entry points (homepage, collections, categories, blog, contact).
     -->
     <!-- generated: 2025-10-16 -->
+
     <url>
-        <loc>https://example.com/</loc>
+        <loc>https://tabib-jo.com/</loc>
         <lastmod>2025-10-16</lastmod>
         <changefreq>daily</changefreq>
         <priority>1.00</priority>
     </url>
 
     <url>
-        <loc>https://example.com/products</loc>
+        <loc>https://tabib-jo.com/products</loc>
         <lastmod>2025-10-16</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.90</priority>
     </url>
 
     <url>
-        <loc>https://example.com/categories</loc>
+        <loc>https://tabib-jo.com/product-category</loc>
         <lastmod>2025-10-16</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.80</priority>
     </url>
 
     <url>
-        <loc>https://example.com/blog</loc>
+        <loc>https://tabib-jo.com/blog</loc>
         <lastmod>2025-10-16</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.70</priority>
     </url>
 
     <url>
-        <loc>https://example.com/contact</loc>
+        <loc>https://tabib-jo.com/contact</loc>
         <lastmod>2025-10-16</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.50</priority>
     </url>
 
-    <!-- If you have a sitemaps index (multiple sitemap files), add them here instead. -->
+    <!-- Add additional dynamic sitemaps or per-entity entries here when available -->
 </urlset>

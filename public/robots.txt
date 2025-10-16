@@ -8,7 +8,5 @@ Disallow: /storage/
 # Allow everything else
 Allow: /
 
-# Sitemap location (replace example.com)
-Sitemap: https://example.com/sitemap.xml
-User-agent: *
-Disallow:
+# Sitemap location
+Sitemap: https://tabib-jo.com/sitemap.xml
