@@ -1,0 +1,2 @@
+<?php echo $__env->make(Theme::getThemeNamespace('views.ecommerce.products'), \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+<?php /**PATH /home/tabibj5/public_html/platform/themes/farmart/views/ecommerce/brand.blade.php ENDPATH**/ ?>

@@ -1,0 +1,2 @@
+<footer-product-categories-component name="<?php echo e($config['name']); ?>" url="<?php echo e(route('public.ajax.get-product-categories')); ?>?<?php echo e(http_build_query(['categories' => $config['categories']])); ?>"></footer-product-categories-component>
+<?php /**PATH /home/tabibj5/public_html/platform/themes/farmart/////widgets/product-categories/templates/frontend.blade.php ENDPATH**/ ?>
