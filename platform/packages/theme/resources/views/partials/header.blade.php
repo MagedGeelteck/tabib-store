@@ -31,19 +31,10 @@
         $primaryPhrase = $containsArabic ? 'منتجات صحية' : 'Health Products';
     }
 
-    $computedTitle = trim($titleSource ?: $siteName);
-    if (! $hasKeyword || mb_strlen(strip_tags($computedTitle)) < 30) {
-        if ($computedTitle && stripos($computedTitle, $primaryPhrase) === false) {
-            $computedTitle = $primaryPhrase . ' — ' . $computedTitle;
-        }
-        if (stripos($computedTitle, $siteName) === false) {
-            $computedTitle = $computedTitle . ' | ' . $siteName;
-        }
-    } else {
-        if (stripos($computedTitle, $siteName) === false) {
-            $computedTitle = $computedTitle . ' | ' . $siteName;
-        }
-    }
+    require_once base_path('app/Helpers/SeoHelperNormalize.php');
+    $routeName = optional(request()->route())->getName();
+    $locale = app()->getLocale();
+    $computedTitle = normalize_seo_title($titleSource, $siteName, $routeName, $locale);
 
     // Description fallback
     if ($seoDescription) {

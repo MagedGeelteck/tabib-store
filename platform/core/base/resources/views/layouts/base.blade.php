@@ -11,24 +11,25 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
     @php
-        // Prefer SeoHelper values when present (Botble SeoHelper integration)
+        // Always include the normalization helper
+        require_once base_path('app/Helpers/SeoHelperNormalize.php');
         $siteName = setting('admin_title', config('core.base.general.base_name'));
         try {
             if (class_exists(\Botble\SeoHelper\Facades\SeoHelper::class)) {
-                // If controllers or plugins set an SEO title, normalize it here so
-                // short titles like "Shopping Cart" receive a localized, keyword-rich
-                // append and the site name for consistent branding.
                 $existingTitle = \Botble\SeoHelper\Facades\SeoHelper::getTitle();
-                $title = $existingTitle ?: page_title()->getTitle();
+                $rawTitle = $existingTitle ?: page_title()->getTitle();
                 $description = \Botble\SeoHelper\Facades\SeoHelper::getDescription();
             } else {
-                $title = page_title()->getTitle();
+                $rawTitle = page_title()->getTitle();
                 $description = null;
             }
         } catch (\Exception $e) {
-            $title = page_title()->getTitle();
+            $rawTitle = page_title()->getTitle();
             $description = null;
         }
+        $routeName = optional(request()->route())->getName();
+        $locale = app()->getLocale();
+        $title = normalize_seo_title($rawTitle, $siteName, $routeName, $locale);
 
         // Ensure we only modify frontend pages (skip admin area)
         $isAdmin = request()->is('admin*') || request()->routeIs('admin.*');
