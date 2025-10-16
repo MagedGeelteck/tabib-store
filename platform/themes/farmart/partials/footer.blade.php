@@ -327,9 +327,27 @@
             padding: 0,
             nextSelector: '.pagination li.active + li a',
             contentSelector: 'div.scrolling-pagination',
-            callback: function() {
-                $('ul.pagination').remove();
-            }
+                callback: function() {
+                    // remove the native pagination controls appended by server-side markup
+                    $('ul.pagination').remove();
+
+                    // Re-run theme JS initializers for newly appended content so that
+                    // lazy-loaded images and carousels are initialized.
+                    try {
+                        // Re-scan lazyload for images inside the scrolling container.
+                        if (window.MartApp && typeof window.MartApp.lazyLoad === 'function') {
+                            // Pass the scrolling container element so LazyLoad only scans the new content
+                            MartApp.lazyLoad($('.scrolling-pagination').get(0));
+                        }
+
+                        // Re-init any slick/carousel slides inside the newly appended block
+                        if (window.MartApp && typeof window.MartApp.slickSlides === 'function') {
+                            MartApp.slickSlides();
+                        }
+                    } catch (e) {
+                        console && console.error && console.error('jscroll callback error:', e);
+                    }
+                }
         });
     });
 
