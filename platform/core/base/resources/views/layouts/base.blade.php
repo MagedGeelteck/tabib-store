@@ -180,6 +180,9 @@
     @endphp
     <link rel="canonical" href="{{ rtrim($canonical, '/') ?: 'https://tabib-jo.com' }}">
 
+    {{-- Always output a fallback meta keywords tag for SEO tools --}}
+    <meta name="keywords" content="محل مختص بالاغذية الخاصة, خالي سكر, الرياضيين, دايت الكيتو, خالي من الجلوتين, خالي من اللاكتوز, النباتية, عالية البروتين, قليل البروتين, Tabib Store, online pharmacy, health products, Jordan, Amman, medicines, supplements, vitamins, pharmacy">
+
     {{-- SeoHelper will render meta / open graph / twitter tags via the theme header partial --}}
     {{-- Keep only description/robots/viewport/csrf here as base tags --}}
     @if ($isAdmin)
