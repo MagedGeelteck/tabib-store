@@ -26,7 +26,15 @@
     @endif
 
     <link rel="preconnect" href="{{ BaseHelper::getGoogleFontsURL() }}">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="{{ BaseHelper::getGoogleFontsURL() }}/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+
+    <!-- Preload main theme stylesheet (non-blocking) -->
+    <link rel="preload" href="{{ asset('themes/farmart/css/style.css') }}" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ asset('themes/farmart/css/style.css') }}"></noscript>
+
+    <!-- Preload main woff2 font to speed up text rendering -->
+    <link rel="preload" href="{{ asset('themes/farmart/plugins/font-awesome/fonts/fontawesome-webfont.woff2') }}" as="font" type="font/woff2" crossorigin>
 
     {!! Assets::renderHeader(['core']) !!}
 
