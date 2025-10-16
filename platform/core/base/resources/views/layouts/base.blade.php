@@ -56,7 +56,27 @@
 *{
     font-size:16px;
 }    
-    
+    /* Critical CSS for above-the-fold: reserve hero/slider space to avoid layout shift
+       - Gives slider a stable aspect ratio so the LCP image can be loaded and painted
+       without causing a reflow. object-fit keeps the image cover-style.
+    */
+    .section-slides-wrapper,
+    .slide-item__image {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        min-height: 220px; /* fallback for very old browsers */
+        overflow: hidden;
+        display: block;
+        background-color: #f6f6f6; /* neutral background while image loads */
+    }
+
+    .slide-item__image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
     </style>
 </head>
 <body @if (BaseHelper::adminLanguageDirection() == 'rtl') dir="rtl" @endif class="@yield('body-class', 'page-sidebar-closed-hide-logo page-content-white page-container-bg-solid') {{ session()->get('sidebar-menu-toggle') ? 'page-sidebar-closed' : '' }}" style="@yield('body-style')">

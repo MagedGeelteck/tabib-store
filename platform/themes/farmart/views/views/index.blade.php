@@ -36,9 +36,11 @@ $category_id=request()->segment(count(request()->segments()));
                                                 <source srcset="{{ $sliderUrl }}" media="(min-width: 768px)" />
                                                 <source srcset="{{ $sliderUrl }}" media="(max-height: 767px)" />
                                                 {{-- Use the optimized slider URL (fall back to raw path if needed) --}}
-                                                <img loading="eager" fetchpriority="high" decoding="async" src="{{ $sliderUrl ?: ($slider->image ?? '') }}" alt="slider" style="border-radius:10px; max-width: 100%; min-width: 300px; height: auto;">
+                                                <img loading="eager" fetchpriority="high" decoding="async" src="{{ $sliderUrl ?: ($slider->image ?? '') }}" alt="slider"
+                                                     width="1600" height="900"
+                                                     style="border-radius:10px; max-width:100%; height:100%; object-fit:cover;">
                                                 <noscript>
-                                                    <img src="{{ $sliderUrl ?: ($slider->image ?? '') }}" alt="slider" style="border-radius:10px; max-width: 100%; min-width: 300px; height: auto;">
+                                                    <img src="{{ $sliderUrl ?: ($slider->image ?? '') }}" alt="slider" width="1600" height="900" style="border-radius:10px; max-width:100%; height:100%; object-fit:cover;">
                                                 </noscript>
                                             </picture>
                                     </div>
