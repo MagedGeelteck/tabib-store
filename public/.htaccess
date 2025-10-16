@@ -1,3 +1,46 @@
+RewriteEngine On
+RewriteCond %{HTTPS} !=on
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Redirect any host that is not the canonical host to https://tabib-jo.com
+    RewriteCond %{HTTP_HOST} !^tabib-jo\.com$ [NC]
+    RewriteRule ^ https://tabib-jo.com%{REQUEST_URI} [L,R=301]
+
+    # Enforce HTTPS
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^ https://tabib-jo.com%{REQUEST_URI} [L,R=301]
+
+    # Prevent direct access to dotfiles
+    RewriteRule (^|/|\.)\.(env|ht|git) - [F]
+
+    # If the requested resource exists, serve it directly
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Redirect accidental /public/ in the path (defensive)
+    RewriteCond %{REQUEST_URI} ^/public/(.*)$ [NC]
+    RewriteRule ^public/(.*)$ https://tabib-jo.com/$1 [L,R=301]
+
+    # Send all other requests to Laravel front controller
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Protect sensitive files
+<FilesMatch "(?i)\.(env|config|json|lock)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
 
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
@@ -51,4 +94,5 @@
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
+    
 </IfModule>

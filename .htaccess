@@ -1,3 +1,34 @@
+## Project-root .htaccess
+# This file helps when the server DocumentRoot is the project root (not recommended).
+# It redirects clients to the canonical host (https://tabib-jo.com) and removes accidental
+# "/public/" prefixes so crawlers/clients don't see /public/ in URLs.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # If the request contains /public/ at the start, remove it and redirect to canonical host
+    RewriteCond %{REQUEST_URI} ^/public/(.*)$ [NC]
+    RewriteRule ^public/(.*)$ https://tabib-jo.com/$1 [L,R=301]
+
+    # Redirect any host that is not the canonical host to https://tabib-jo.com
+    RewriteCond %{HTTP_HOST} !^tabib-jo\.com$ [NC]
+    RewriteRule ^ https://tabib-jo.com%{REQUEST_URI} [L,R=301]
+
+    # Enforce HTTPS when not already using it
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^ https://tabib-jo.com%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+## Fallback: deny access to hidden files
+<FilesMatch "^\.(env|ht|git)">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+    Satisfy All
+</FilesMatch>
 RewriteEngine on
 
 # Redirect Trailing Slashes If Not A Folder...

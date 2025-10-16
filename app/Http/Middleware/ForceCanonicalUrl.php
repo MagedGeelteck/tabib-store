@@ -14,27 +14,35 @@ class ForceCanonicalUrl
     public function handle(Request $request, Closure $next)
     {
         $canonicalHost = 'tabib-jo.com';
-        $host = $request->getHost();
-        $isSecure = $request->isSecure() || $request->header('X-Forwarded-Proto') === 'https';
+
+        // Respect proxies and load balancers
+        $host = $request->header('X-Forwarded-Host') ?: $request->getHost();
+        $forwardedProto = $request->header('X-Forwarded-Proto');
+        $isSecure = ($forwardedProto === 'https') || $request->isSecure();
 
         // Skip redirects for CLI, local dev or asset requests
-        if (app()->runningInConsole() || $request->is('storage/*') || $request->is('vendor/*')) {
+        if (app()->runningInConsole() || $request->is('storage/*') || $request->is('vendor/*') || $request->is('api/*')) {
             return $next($request);
         }
 
-        $needsRedirect = false;
+        $uri = $request->getRequestUri();
+        $query = $request->getQueryString();
 
-        if (strpos($host, 'www.') === 0) {
-            $needsRedirect = true;
+        // Normalize URI: strip accidental /public/ if the app was deployed incorrectly
+        if (strpos($uri, '/public/') === 0) {
+            $uri = substr($uri, 7);
+        } elseif ($uri === '/public') {
+            $uri = '/';
         }
 
-        if (! $isSecure) {
-            $needsRedirect = true;
-        }
+        $shouldRedirectHost = (stripos($host, 'www.') === 0) || (strcasecmp($host, $canonicalHost) !== 0);
+        $shouldRedirectScheme = ! $isSecure;
 
-        if ($needsRedirect) {
-            $uri = $request->getRequestUri();
+        if ($shouldRedirectHost || $shouldRedirectScheme) {
             $target = 'https://' . $canonicalHost . $uri;
+            if ($query) {
+                $target .= '?' . $query;
+            }
             return redirect()->to($target, 301);
         }
 
