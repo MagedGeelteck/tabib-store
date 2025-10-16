@@ -34,7 +34,12 @@ class PublicController extends Controller
             }
         }
 
-        SeoHelper::setTitle(theme_option('site_title'));
+    // Prefer a user-friendly, keyword-aware homepage title and description
+    $siteName = theme_option('site_title') ?: setting('admin_title', config('core.base.general.base_name'));
+    $homeTitle = $siteName . ' — Online Pharmacy & Health Products in Jordan';
+    $homeDescription = 'Tabib brings trusted medicines, health products and medical supplies to your doorstep in Amman and across Jordan. Fast delivery, certified products, and great prices.';
+
+    SeoHelper::setTitle($homeTitle)->setDescription($homeDescription);
 
         Theme::breadcrumb()->add(__('Home'), route('public.index'));
 
