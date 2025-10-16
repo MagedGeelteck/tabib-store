@@ -12,6 +12,27 @@ $category_id=request()->segment(count(request()->segments()));
 
 @endphp
 
+@push('header')
+    {{-- Add SEO keywords and non-visual title augmentation for homepage (no UI impact) --}}
+    <meta name="keywords" content="online pharmacy, health products, medicines, medical supplies, Amman, Jordan, tabib">
+    <script>
+        // Append a small keyword phrase to the page title for SEO/serp without changing layout
+        try {
+            if (document && document.title) {
+                var kws = ' - Online Pharmacy & Health Products in Jordan';
+                if (document.title.indexOf(kws) === -1) {
+                    document.title = document.title + kws;
+                }
+            }
+        } catch (e) {
+            // silent
+        }
+    </script>
+@endpush
+
+{{-- Visually hidden H2 for improved heading structure (does not affect UI) --}}
+<h2 class="visually-hidden">Online pharmacy, health products, medicines and medical supplies in Amman, Jordan</h2>
+
 
 
    
