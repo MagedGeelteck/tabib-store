@@ -65,113 +65,107 @@
                     $rawTitle = $existingTitle ?: page_title()->getTitle();
                     $description = \Botble\SeoHelper\Facades\SeoHelper::getDescription();
                 } else {
-                    $rawTitle = page_title()->getTitle();
-                    $description = null;
-                }
-            } catch (\Exception $e) {
-                $rawTitle = page_title()->getTitle();
-                $description = null;
-            }
-            $title = normalize_seo_title($rawTitle, $siteName, $routeName, $locale);
+                    @php
+                        // Determine whether current request is admin area. If so, skip all SEO normalization to avoid side-effects on admin pages.
+                        $isAdmin = request()->is('admin*') || request()->routeIs('admin.*');
 
-            // A broader, practical set of keywords and natural-language fallbacks.
-                // These are used to detect whether a page title already contains relevant terms.
-                // Curated keyword set (English + Arabic) — concise, natural phrases to avoid stuffing
-                $keywords = [
-                    // English keywords
-                    'online pharmacy', 'pharmacy', 'Tabib', 'Jordan', 'Amman',
-                    'medicines', 'buy medicines', 'health products', 'medical supplies', 'vitamins', 'supplements',
-                    'sugar-free', 'keto', 'diet', 'gluten free', 'lactose free', 'sports nutrition', 'high protein', 'low protein',
-                    // Arabic keywords (natural phrases)
-                    'صيدلية', 'ادوية', 'منتجات صحية', 'منتجات غذائية خاصة', 'خالي سكر', 'الرياضيين', 'دايت', 'كيتو',
-                    'خالي من الجلوتين', 'خالي من اللاكتوز', 'نباتي', 'نباتية', 'عالية البروتين', 'قليل البروتين', 'عمان', 'الاردن'
-                ];
+                        $siteName = setting('admin_title', config('core.base.general.base_name'));
 
-                $hasKeyword = false;
-                foreach ($keywords as $k) {
-                    if (!empty($k) && stripos($title, $k) !== false) {
-                        $hasKeyword = true;
-                        break;
-                    }
-                }
-
-                // Improved normalization: prepend a natural keyword phrase for short/generic titles
-                $containsArabic = preg_match('/[\x{0600}-\x{06FF}]/u', $title) || app()->getLocale() === 'ar';
-
-                // Page-type-specific keyword phrase
-                if (request()->routeIs('public.index')) {
-                    $primaryPhrase = $containsArabic ? 'محل مختص بالاغذية الخاصة' : 'Online Pharmacy & Health Products';
-                } elseif (request()->routeIs('public.products') || request()->routeIs('public.product')) {
-                    $primaryPhrase = $containsArabic ? 'منتجات صحية في الأردن' : 'Health Products in Jordan';
-                } elseif (request()->routeIs('public.cart') || request()->routeIs('public.profile')) {
-                    $primaryPhrase = $containsArabic ? 'منتجات صحية، أدوية، توصيل سريع' : 'Medicines, Health Products, Fast Delivery';
-                } else {
-                    $primaryPhrase = $containsArabic ? 'منتجات صحية' : 'Health Products';
-                }
-
-                // If title is short or lacks keywords, prepend phrase
-                if (! $hasKeyword || mb_strlen(strip_tags($title)) < 30) {
-                    if ($title && stripos($title, $primaryPhrase) === false) {
-                        $title = $primaryPhrase . ' — ' . trim($title);
-                    }
-                    if (stripos($title, $siteName) === false) {
-                        $title = $title . ' | ' . $siteName;
-                    }
-                } else {
-                    if (stripos($title, $siteName) === false) {
-                        $title = trim($title) . ' | ' . $siteName;
-                    }
-                }
-
-                // If SeoHelper didn't set a description, provide a friendly default for the homepage
-                // and a concise generic description for other pages missing one.
-                if (empty($description)) {
-                    // Primary keywords to place early in description (localized)
-                    $primaryKeywordsEn = 'Online pharmacy, health products, fast delivery in Amman';
-                    $primaryKeywordsAr = 'صيدلية أونلاين، منتجات صحية، توصيل سريع في عمان';
-
-                    $containsArabic = preg_match('/[\x{0600}-\x{06FF}]/u', request()->getPathInfo()) || app()->getLocale() === 'ar';
-
-                    // Use the Arabic site description provided by the user for the homepage
-                        $arabicSiteDescription = 'محل مختص بالاغذية الخاصة: منتجات (خالي سكر، الرياضيين، دايت الكيتو، خالي من الجلوتين، خالي من اللاكتوز، النباتية، عالية البروتين، قليل البروتين) Tabib Store';
-
-                    if (request()->routeIs('public.index')) {
-                        if ($containsArabic) {
-                            $description = "{$primaryKeywordsAr} — {$arabicSiteDescription} " . $siteName;
+                        if ($isAdmin) {
+                            // For admin pages, keep titles/descriptions as-is and don't include normalization helper.
+                            $title = $safeTitle ?: $siteName;
+                            $description = null;
                         } else {
-                            $description = "{$primaryKeywordsEn}. Trusted medicines and health products at {$siteName}. Fast delivery across Jordan.";
-                        }
-                    } else {
-                        if ($containsArabic) {
-                            $description = "{$primaryKeywordsAr} — {$arabicSiteDescription} " . $siteName;
-                        } else {
-                            $description = "{$primaryKeywordsEn}. Shop trusted medicines and medical supplies at {$siteName}. Fast delivery in Jordan.";
-                        }
-                    }
+                            // Frontend: include normalization helper and run normalization logic.
+                            // Always include the normalization helper
+                            require_once base_path('app/Helpers/SeoHelperNormalize.php');
+                            try {
+                                if (class_exists(\Botble\SeoHelper\Facades\SeoHelper::class)) {
+                                    $existingTitle = \Botble\SeoHelper\Facades\SeoHelper::getTitle();
+                                    $rawTitle = $existingTitle ?: page_title()->getTitle();
+                                    $description = \Botble\SeoHelper\Facades\SeoHelper::getDescription();
+                                } else {
+                                    $rawTitle = page_title()->getTitle();
+                                    $description = null;
+                                }
+                            } catch (\Exception $e) {
+                                $rawTitle = page_title()->getTitle();
+                                $description = null;
+                            }
+                            $routeName = optional(request()->route())->getName();
+                            $locale = app()->getLocale();
+                            $title = normalize_seo_title($rawTitle, $siteName, $routeName, $locale);
 
-                    // Ensure description is not overly long (truncate softly)
-                    if (mb_strlen($description) > 160) {
-                        $description = mb_substr($description, 0, 157) . '...';
-                    }
-                }
-        }
-    @endphp
-    @php
-        // If SeoHelper is available, push our computed title/description into it and
-        // let SeoHelper::render() (hooked by the theme header) output the final
-        // <title> and all meta tags. Otherwise, fall back to a plain <title>.
-        if (class_exists(\Botble\SeoHelper\Facades\SeoHelper::class)) {
-            try {
-                // Re-set the normalized title back into SeoHelper so any earlier
-                // controller-set titles are improved.
-                \Botble\SeoHelper\Facades\SeoHelper::setTitle($title)->setDescription($description);
-            } catch (\Exception $e) {
-                // if something goes wrong, fallback to printing title directly below
-                echo '<title>' . e($title) . '</title>';
-            }
-        } else {
-            echo '<title>' . e($title) . '</title>';
-        }
+                            // A broader, practical set of keywords and natural-language fallbacks.
+                            $keywords = [
+                                'online pharmacy', 'pharmacy', 'Tabib', 'Jordan', 'Amman',
+                                'medicines', 'buy medicines', 'health products', 'medical supplies', 'vitamins', 'supplements',
+                                'sugar-free', 'keto', 'diet', 'gluten free', 'lactose free', 'sports nutrition', 'high protein', 'low protein',
+                                'صيدلية', 'ادوية', 'منتجات صحية', 'منتجات غذائية خاصة', 'خالي سكر', 'الرياضيين', 'دايت', 'كيتو',
+                                'خالي من الجلوتين', 'خالي من اللاكتوز', 'نباتي', 'نباتية', 'عالية البروتين', 'قليل البروتين', 'عمان', 'الاردن'
+                            ];
+
+                            $hasKeyword = false;
+                            foreach ($keywords as $k) {
+                                if (!empty($k) && stripos($title, $k) !== false) {
+                                    $hasKeyword = true;
+                                    break;
+                                }
+                            }
+
+                            $containsArabic = preg_match('/[\x{0600}-\x{06FF}]/u', $title) || app()->getLocale() === 'ar';
+
+                            if (request()->routeIs('public.index')) {
+                                $primaryPhrase = $containsArabic ? 'محل مختص بالاغذية الخاصة' : 'Online Pharmacy & Health Products';
+                            } elseif (request()->routeIs('public.products') || request()->routeIs('public.product')) {
+                                $primaryPhrase = $containsArabic ? 'منتجات صحية في الأردن' : 'Health Products in Jordan';
+                            } elseif (request()->routeIs('public.cart') || request()->routeIs('public.profile')) {
+                                $primaryPhrase = $containsArabic ? 'منتجات صحية، أدوية، توصيل سريع' : 'Medicines, Health Products, Fast Delivery';
+                            } else {
+                                $primaryPhrase = $containsArabic ? 'منتجات صحية' : 'Health Products';
+                            }
+
+                            if (! $hasKeyword || mb_strlen(strip_tags($title)) < 30) {
+                                if ($title && stripos($title, $primaryPhrase) === false) {
+                                    $title = $primaryPhrase . ' — ' . trim($title);
+                                }
+                                if (stripos($title, $siteName) === false) {
+                                    $title = $title . ' | ' . $siteName;
+                                }
+                            } else {
+                                if (stripos($title, $siteName) === false) {
+                                    $title = trim($title) . ' | ' . $siteName;
+                                }
+                            }
+
+                            if (empty($description)) {
+                                $primaryKeywordsEn = 'Online pharmacy, health products, fast delivery in Amman';
+                                $primaryKeywordsAr = 'صيدلية أونلاين، منتجات صحية، توصيل سريع في عمان';
+
+                                $containsArabic = preg_match('/[\x{0600}-\x{06FF}]/u', request()->getPathInfo()) || app()->getLocale() === 'ar';
+
+                                $arabicSiteDescription = 'محل مختص بالاغذية الخاصة: منتجات (خالي سكر، الرياضيين، دايت الكيتو، خالي من الجلوتين، خالي من اللاكتوز، النباتية، عالية البروتين، قليل البروتين) Tabib Store';
+
+                                if (request()->routeIs('public.index')) {
+                                    if ($containsArabic) {
+                                        $description = "{$primaryKeywordsAr} — {$arabicSiteDescription} " . $siteName;
+                                    } else {
+                                        $description = "{$primaryKeywordsEn}. Trusted medicines and health products at {$siteName}. Fast delivery across Jordan.";
+                                    }
+                                } else {
+                                    if ($containsArabic) {
+                                        $description = "{$primaryKeywordsAr} — {$arabicSiteDescription} " . $siteName;
+                                    } else {
+                                        $description = "{$primaryKeywordsEn}. Shop trusted medicines and medical supplies at {$siteName}. Fast delivery in Jordan.";
+                                    }
+                                }
+
+                                if (mb_strlen($description) > 160) {
+                                    $description = mb_substr($description, 0, 157) . '...';
+                                }
+                            }
+                        }
+                    @endphp
     @endphp
     @php
         // Build a canonical URL for crawlers.
