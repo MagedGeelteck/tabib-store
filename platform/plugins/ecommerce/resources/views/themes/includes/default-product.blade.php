@@ -5,8 +5,35 @@
 
     <div class="block2-img wrap-pic-w of-hidden pos-relative
         @if ($product->front_sale_price != $product->price) block2-labelsale @endif">
-        <img src="{{ RvMedia::getImageUrl($product->image, 'product-thumbnail', false, RvMedia::getDefaultImage()) }}"
-             alt="{{ $product->name }}">
+        @php
+            $identifier = $product->sku ?: $product->id;
+            $originalUrl = RvMedia::getImageUrl($product->image, null, false, RvMedia::getDefaultImage());
+            $filename = basename(parse_url($originalUrl, PHP_URL_PATH));
+            $compressedRelative = "storage/compressed-images/products-images/{$identifier}/{$filename}";
+            $compressedPath = public_path($compressedRelative);
+            $thumbUrl = RvMedia::getImageUrl($product->image, 'product-thumbnail', false, RvMedia::getDefaultImage());
+            $thumbWidth = $thumbHeight = null;
+            if (file_exists($compressedPath)) {
+                $thumbUrl = asset($compressedRelative);
+                try {
+                    $size = @getimagesize($compressedPath);
+                    if (!empty($size)) {
+                        $thumbWidth = $size[0];
+                        $thumbHeight = $size[1];
+                    }
+                } catch (\Exception $e) {
+                    // ignore
+                }
+            }
+        @endphp
+        <img
+            class="lazyload"
+            src="{{ image_placeholder($thumbUrl) }}"
+            data-src="{{ $thumbUrl }}"
+            alt="{{ $product->name }}"
+            decoding="async"
+            @if(!empty($thumbWidth) && !empty($thumbHeight)) width="{{ $thumbWidth }}" height="{{ $thumbHeight }}" @endif
+        >
 
         <div class="block2-overlay trans-0-4">
             @if (EcommerceHelper::isWishlistEnabled())

@@ -7,7 +7,20 @@
     <input type="hidden" name="product_id" value="{{ $product ? $product->id : '' }}">
     <div class="row">
         <div class="col-3">
-            <img src="{{ $product ? RvMedia::getImageUrl($product->image, 'thumb', false, RvMedia::getDefaultImage()) : '' }}" alt="product-image" class="ecommerce-product-image">
+            @php
+                if ($product) {
+                    $identifier = $product->sku ?: $product->id;
+                    $originalUrl = RvMedia::getImageUrl($product->image, null, false, RvMedia::getDefaultImage());
+                    $filename = basename(parse_url($originalUrl, PHP_URL_PATH));
+                    $compressedRelative = "storage/compressed-images/products-images/{$identifier}/{$filename}";
+                    $compressedPath = public_path($compressedRelative);
+                    $thumb = RvMedia::getImageUrl($product->image, 'thumb', false, RvMedia::getDefaultImage());
+                    if (file_exists($compressedPath)) {
+                        $thumb = asset($compressedRelative);
+                    }
+                }
+            @endphp
+            <img src="{{ $product ? image_placeholder($thumb) : '' }}" data-src="{{ $product ? $thumb : '' }}" alt="product-image" class="ecommerce-product-image lazyload">
         </div>
         <div class="col-9">
             <h2 class="modal-title fs-5 ecommerce-product-name" id="product-review-modal-label">{{ $product ? $product->name : '' }}</h2>

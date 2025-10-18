@@ -17,7 +17,19 @@
                 @foreach($products as $product)
                     <tr>
                         <td>
-                            <img alt="{{ $product->original_product->name }}" width="50" height="70" class="img-fluid" style="max-height: 75px" src="{{ RvMedia::getImageUrl($product->image, 'thumb', false, RvMedia::getDefaultImage()) }}">
+                            @php
+                                $prod = $product->original_product ?: $product;
+                                $identifier = $prod->sku ?: $prod->id;
+                                $originalUrl = RvMedia::getImageUrl($product->image, null, false, RvMedia::getDefaultImage());
+                                $filename = basename(parse_url($originalUrl, PHP_URL_PATH));
+                                $compressedRelative = "storage/compressed-images/products-images/{$identifier}/{$filename}";
+                                $compressedPath = public_path($compressedRelative);
+                                $thumb = RvMedia::getImageUrl($product->image, 'thumb', false, RvMedia::getDefaultImage());
+                                if (file_exists($compressedPath)) {
+                                    $thumb = asset($compressedRelative);
+                                }
+                            @endphp
+                            <img alt="{{ $product->original_product->name }}" width="50" height="70" class="img-fluid lazyload" style="max-height: 75px" src="{{ image_placeholder($thumb) }}" data-src="{{ $thumb }}">
                         </td>
                         <td><a href="{{ $product->original_product->url }}">{{ $product->original_product->name }}</a></td>
 

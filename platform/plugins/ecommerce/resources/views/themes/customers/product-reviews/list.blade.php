@@ -27,10 +27,21 @@
                             <div class="col mt-3 ecommerce-product-item" data-id="{{ $product->id }}">
                                 <div class="card mb-3 p-1">
                                     <div class="row g-1">
-                                        <div class="col-md-4">
-                                            <img src="{{ RvMedia::getImageUrl($product->order_product_image ?: $product->image, 'thumb', false, RvMedia::getDefaultImage())}}"
-                                                class="img-fluid rounded-start ecommerce-product-image" alt="{{ $product->name }}">
-                                        </div>
+                                                        <div class="col-md-4">
+                                                            @php
+                                                                $imgSource = $product->order_product_image ?: $product->image;
+                                                                $identifier = $product->sku ?: $product->id;
+                                                                $originalUrl = RvMedia::getImageUrl($imgSource, null, false, RvMedia::getDefaultImage());
+                                                                $filename = basename(parse_url($originalUrl, PHP_URL_PATH));
+                                                                $compressedRelative = "storage/compressed-images/products-images/{$identifier}/{$filename}";
+                                                                $compressedPath = public_path($compressedRelative);
+                                                                $thumb = RvMedia::getImageUrl($imgSource, 'thumb', false, RvMedia::getDefaultImage());
+                                                                if (file_exists($compressedPath)) {
+                                                                    $thumb = asset($compressedRelative);
+                                                                }
+                                                            @endphp
+                                                            <img src="{{ image_placeholder($thumb) }}" data-src="{{ $thumb }}" class="img-fluid rounded-start ecommerce-product-image lazyload" alt="{{ $product->name }}">
+                                                        </div>
                                         <div class="col-md-8">
                                             <h6 class="card-title ecommerce-product-name">{{ $product->order_product_name ?: $product->name }}</h6>
                                             @if ($product->order_completed_at)

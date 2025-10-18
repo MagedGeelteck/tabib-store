@@ -9,8 +9,20 @@
                                 <tr class="pr_image">
                                     <td class="text-muted font-md fw-600">{{ __('Preview') }}</td>
                                     @foreach($products as $product)
+                                        @php
+                                            $prod = $product->original_product ?: $product;
+                                            $identifier = $prod->sku ?: $prod->id;
+                                            $originalUrl = RvMedia::getImageUrl($product->image, null, false, RvMedia::getDefaultImage());
+                                            $filename = basename(parse_url($originalUrl, PHP_URL_PATH));
+                                            $compressedRelative = "storage/compressed-images/products-images/{$identifier}/{$filename}";
+                                            $compressedPath = public_path($compressedRelative);
+                                            $preview = RvMedia::getImageUrl($product->image, 'thumb', false, RvMedia::getDefaultImage());
+                                            if (file_exists($compressedPath)) {
+                                                $preview = asset($compressedRelative);
+                                            }
+                                        @endphp
                                         <td class="row_img">
-                                            <a href="{{ $product->original_product->url }}"><img src="{{ RvMedia::getImageUrl($product->image, 'thumb', false, RvMedia::getDefaultImage()) }}" alt="{{ $product->name }}"></a>
+                                            <a href="{{ $product->original_product->url }}"><img class="lazyload" src="{{ image_placeholder($preview) }}" data-src="{{ $preview }}" alt="{{ $product->name }}"></a>
                                         </td>
                                     @endforeach
                                 </tr>

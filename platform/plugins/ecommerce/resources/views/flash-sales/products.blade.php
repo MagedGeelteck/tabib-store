@@ -15,10 +15,21 @@
             <table class="table-normal">
                 <tbody>
                 @foreach($products as $index => $product)
+                    @php
+                        $identifier = $product->sku ?: $product->id;
+                        $originalUrl = RvMedia::getImageUrl($product->image, null, false, RvMedia::getDefaultImage());
+                        $filename = basename(parse_url($originalUrl, PHP_URL_PATH));
+                        $compressedRelative = "storage/compressed-images/products-images/{$identifier}/{$filename}";
+                        $compressedPath = public_path($compressedRelative);
+                        $thumb = RvMedia::getImageUrl($product->image, 'thumb', false, RvMedia::getDefaultImage());
+                        if (file_exists($compressedPath)) {
+                            $thumb = asset($compressedRelative);
+                        }
+                    @endphp
                     <tr data-product-id="{{ $product->id }}">
                         <td class="width-60-px min-width-60-px" style="padding-top: 15px;">
                             <div class="wrap-img vertical-align-m-i">
-                                <img class="thumb-image" src="{{ RvMedia::getImageUrl($product->image, 'thumb', false, RvMedia::getDefaultImage()) }}" alt="{{ $product->name }}"></div>
+                                <img class="thumb-image lazyload" src="{{ image_placeholder($thumb) }}" data-src="{{ $thumb }}" alt="{{ $product->name }}"></div>
                         </td>
                         <td class="pl5 p-r5 min-width-200-px" style="padding-top: 15px;">
                             <a class="hover-underline pre-line" href="{{ route('products.edit', $product->id) }}" target="_blank">{{ $product->name }} ({{ format_price($product->sale_price ?: $product->price) }})</a>

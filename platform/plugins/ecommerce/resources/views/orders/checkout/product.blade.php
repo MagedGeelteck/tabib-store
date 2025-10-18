@@ -1,7 +1,19 @@
 <div class="row cart-item">
     <div class="col-3">
         <div class="checkout-product-img-wrapper">
-            <img class="item-thumb img-thumbnail img-rounded" src="{{ RvMedia::getImageUrl($product->image)}}" alt="{{ $product->original_product->name }}">
+            @php
+                $prod = $product->original_product ?: $product;
+                $identifier = $prod->sku ?: $prod->id;
+                $originalUrl = RvMedia::getImageUrl($product->image, null, false, RvMedia::getDefaultImage());
+                $filename = basename(parse_url($originalUrl, PHP_URL_PATH));
+                $compressedRelative = "storage/compressed-images/products-images/{$identifier}/{$filename}";
+                $compressedPath = public_path($compressedRelative);
+                $thumb = RvMedia::getImageUrl($product->image, 'thumb', false, RvMedia::getDefaultImage());
+                if (file_exists($compressedPath)) {
+                    $thumb = asset($compressedRelative);
+                }
+            @endphp
+            <img class="item-thumb img-thumbnail img-rounded lazyload" src="{{ image_placeholder($thumb) }}" data-src="{{ $thumb }}" alt="{{ $product->original_product->name }}">
             <span class="checkout-quantity">{{ $cartItem->qty }}</span>
         </div>
     </div>

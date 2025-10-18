@@ -39,6 +39,7 @@
                             title="{{ $product->name }}"
                             src="{{ image_placeholder($img) }}"
                             data-src="{{ $imgUrl }}"
+                            data-lazy="{{ $imgUrl }}"
                             @if($width && $height) width="{{ $width }}" height="{{ $height }}" @endif
                             @if ($loop->first) loading="eager" fetchpriority="high" @else loading="lazy" @endif
                             decoding="async"
@@ -64,7 +65,7 @@
             @endphp
             <div class="item">
                 <div class="border p-1 m-1">
-                    <img class="lazyload" title="{{ $product->name }}" src="{{ image_placeholder($t) }}" data-src="{{ $t }}">
+                    <img class="lazyload" title="{{ $product->name }}" src="{{ image_placeholder($t) }}" data-src="{{ $t }}" data-lazy="{{ $t }}">
                 </div>
             </div>
         @empty
