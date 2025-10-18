@@ -85,7 +85,11 @@
                         if (class_exists(\Botble\SeoHelper\Facades\SeoHelper::class)) {
                             // Let SeoHelper output title/meta/og tags if it's available
                             echo \Botble\SeoHelper\Facades\SeoHelper::render();
-                            $metaUrl = rescue(fn() => \Botble\SeoHelper\Facades\SeoHelper::meta()->getUrl());
+                            try {
+                                $metaUrl = \Botble\SeoHelper\Facades\SeoHelper::meta()->getUrl();
+                            } catch (\Exception $e) {
+                                $metaUrl = null;
+                            }
                         } else {
                             $metaUrl = null;
                         }
