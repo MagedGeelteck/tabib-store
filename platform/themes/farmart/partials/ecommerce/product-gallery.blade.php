@@ -80,7 +80,7 @@
             @endphp
             <div class="item">
                 <div class="border p-1 m-1">
-                    <img class="mx-auto" title="{{ $product->name }}" src="{{ $t }}" data-src="{{ $t }}" data-lazy="{{ $t }}">
+                    <img class="mx-auto" title="{{ $product->name }}" src="{{ $compressedThumbRelative }}" data-src="{{ $t }}" data-lazy="{{ $t }}">
                 </div>
             </div>
         @empty
