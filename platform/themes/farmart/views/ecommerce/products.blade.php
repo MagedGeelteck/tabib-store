@@ -3,7 +3,7 @@
     $products->loadMissing('defaultVariation');
 @endphp
 
-{!! $widgets = dynamic_sidebar('products_list_sidebar') !!}
+@php $widgets = dynamic_sidebar('products_list_sidebar'); @endphp
 
 @if (empty($widgets))
     {!! Theme::partial('page-header', ['size' => 'xxxl', 'withTitle' => false]) !!}
@@ -34,13 +34,17 @@
         </div>
     </div>
     <div class="row">
-        <div  hidden class="col-xxl-2 col-lg-3">
-            <form action="{{ URL::current() }}"
-                data-action="{{ route('public.products') }}"
-                method="GET"
-                id="products-filter-form">
-                @include(Theme::getThemeNamespace() . '::views.ecommerce.includes.filters')
-            </form>
+        <div class="col-xxl-2 col-lg-3">
+            @if (!empty($widgets))
+                {!! $widgets !!}
+            @else
+                <form action="{{ URL::current() }}"
+                    data-action="{{ route('public.products') }}"
+                    method="GET"
+                    id="products-filter-form">
+                    @include(Theme::getThemeNamespace() . '::views.ecommerce.includes.filters')
+                </form>
+            @endif
         </div>
         <div class="col-xxl-12 col-lg-12 products-listing position-relative">
             @include(Theme::getThemeNamespace('views.ecommerce.includes.product-items'))
