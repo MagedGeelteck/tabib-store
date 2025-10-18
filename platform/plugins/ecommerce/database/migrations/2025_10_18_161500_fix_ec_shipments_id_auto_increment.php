@@ -22,13 +22,24 @@ return new class () extends Migration
             $max = 0;
         }
 
-        // Use a raw statement to modify the column. This should work on MySQL/MariaDB.
-        // If the column does not exist or has a different type, this will try to set it.
-        DB::statement("ALTER TABLE `ec_shipments` MODIFY `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY;");
+        // Check if the id column already has AUTO_INCREMENT
+        try {
+            $row = DB::selectOne("SELECT EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'ec_shipments' AND COLUMN_NAME = 'id'");
+            $extra = $row && isset($row->EXTRA) ? $row->EXTRA : '';
+        } catch (\Exception $e) {
+            $extra = '';
+        }
 
-        // Ensure next AUTO_INCREMENT is greater than current max id
-        $next = $max + 1;
-        DB::statement("ALTER TABLE `ec_shipments` AUTO_INCREMENT = {$next};");
+        // If 'auto_increment' is not present, alter the column to add it.
+        if (stripos($extra, 'auto_increment') === false) {
+            // Modify column to be BIGINT UNSIGNED AUTO_INCREMENT. Do NOT re-declare PRIMARY KEY
+            // if it already exists to avoid 'Multiple primary key defined' errors.
+            DB::statement("ALTER TABLE `ec_shipments` MODIFY `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT;");
+
+            // Ensure next AUTO_INCREMENT is greater than current max id
+            $next = $max + 1;
+            DB::statement("ALTER TABLE `ec_shipments` AUTO_INCREMENT = {$next};");
+        }
     }
 
     public function down(): void
