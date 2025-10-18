@@ -36,31 +36,45 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
     @php
-        // Always include the normalization helper
-        require_once base_path('app/Helpers/SeoHelperNormalize.php');
+        // Detect admin area early so we can avoid running front-end SEO normalization during admin requests.
         $siteName = setting('admin_title', config('core.base.general.base_name'));
-        try {
-            if (class_exists(\Botble\SeoHelper\Facades\SeoHelper::class)) {
-                $existingTitle = \Botble\SeoHelper\Facades\SeoHelper::getTitle();
-                $rawTitle = $existingTitle ?: page_title()->getTitle();
-                $description = \Botble\SeoHelper\Facades\SeoHelper::getDescription();
-            } else {
+        $routeName = optional(request()->route())->getName();
+        $locale = app()->getLocale();
+        $isAdmin = request()->is('admin*') || request()->routeIs('admin.*');
+
+        // If this is an admin page, skip the front-end SEO normalization to avoid side-effects.
+        if ($isAdmin) {
+            try {
+                if (class_exists(\Botble\SeoHelper\Facades\SeoHelper::class)) {
+                    $title = \Botble\SeoHelper\Facades\SeoHelper::getTitle() ?: page_title()->getTitle();
+                    $description = \Botble\SeoHelper\Facades\SeoHelper::getDescription();
+                } else {
+                    $title = page_title()->getTitle();
+                    $description = null;
+                }
+            } catch (\Exception $e) {
+                $title = page_title()->getTitle();
+                $description = null;
+            }
+        } else {
+            // Always include the normalization helper for front-end pages
+            require_once base_path('app/Helpers/SeoHelperNormalize.php');
+            try {
+                if (class_exists(\Botble\SeoHelper\Facades\SeoHelper::class)) {
+                    $existingTitle = \Botble\SeoHelper\Facades\SeoHelper::getTitle();
+                    $rawTitle = $existingTitle ?: page_title()->getTitle();
+                    $description = \Botble\SeoHelper\Facades\SeoHelper::getDescription();
+                } else {
+                    $rawTitle = page_title()->getTitle();
+                    $description = null;
+                }
+            } catch (\Exception $e) {
                 $rawTitle = page_title()->getTitle();
                 $description = null;
             }
-        } catch (\Exception $e) {
-            $rawTitle = page_title()->getTitle();
-            $description = null;
-        }
-        $routeName = optional(request()->route())->getName();
-        $locale = app()->getLocale();
-        $title = normalize_seo_title($rawTitle, $siteName, $routeName, $locale);
+            $title = normalize_seo_title($rawTitle, $siteName, $routeName, $locale);
 
-        // Ensure we only modify frontend pages (skip admin area)
-        $isAdmin = request()->is('admin*') || request()->routeIs('admin.*');
-
-    if (! $isAdmin) {
-                // A broader, practical set of keywords and natural-language fallbacks.
+            // A broader, practical set of keywords and natural-language fallbacks.
                 // These are used to detect whether a page title already contains relevant terms.
                 // Curated keyword set (English + Arabic) — concise, natural phrases to avoid stuffing
                 $keywords = [

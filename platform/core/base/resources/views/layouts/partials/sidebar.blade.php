@@ -5,8 +5,8 @@
 @foreach ($menus = dashboard_menu()->getAll() as $menu)
     @php $menu = apply_filters(BASE_FILTER_DASHBOARD_MENU, $menu); @endphp
     <li class="nav-item @if ($menu['active']) active @endif " id="{{ $menu['id'] }}">
-        @php $hasChildren = isset($menu['children']) && count($menu['children']); @endphp
-        <a href="{{ $hasChildren ? 'javascript:void(0)' : $menu['url'] }}" data-href="{{ $menu['url'] }}" class="nav-link nav-toggle"  @if ($menu['active'])  style="color:#000;" @endif>
+    @php $hasChildren = isset($menu['children']) && count($menu['children']); @endphp
+    <a href="{{ $menu['url'] }}" class="nav-link nav-toggle"  @if ($menu['active'])  style="color:#000;" @endif>
             <b><i class="{{ $menu['icon'] }}"></i></b>
             <span class="title" style="font-size:18px;"><b>
                 {{ !is_array(trans($menu['name'])) ? trans($menu['name']) : null }}
