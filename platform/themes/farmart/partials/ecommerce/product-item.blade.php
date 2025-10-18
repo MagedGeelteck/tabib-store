@@ -9,10 +9,20 @@ $product->image=$product->images[0] ?? RvMedia::getDefaultImage();
         <div class="img-fluid-eq__dummy"></div>
         <div class="img-fluid-eq__wrap hover-effect">
             <figure class="text-center">
-            <img class="lazyload product-thumbnail__img"
-                src="{{ RvMedia::getImageUrl($product->image)}}"
-                data-src="{{ RvMedia::getImageUrl($product->image)}}"
-            alt="{{ $product->name }}" style="max-height:299px;"> <figcaption>Test message</figcaption></figure>
+                @php
+                    // Prefer a compressed thumbnail variant for product listings to reduce weight and improve LCP
+                    $thumbUrl = RvMedia::getImageUrl($product->image, 'product-thumbnail', false, RvMedia::getDefaultImage());
+                    // Fallback to 'thumb' if the named variant is not available (RvMedia will typically return original if variant missing)
+                    if (! $thumbUrl) {
+                        $thumbUrl = RvMedia::getImageUrl($product->image, 'thumb', false, RvMedia::getDefaultImage());
+                    }
+                @endphp
+                <img class="lazyload product-thumbnail__img"
+                    src="{{ image_placeholder($thumbUrl) }}"
+                    data-src="{{ $thumbUrl }}"
+                    alt="{{ $product->name }}" style="max-height:299px; width:100%; object-fit:contain"> 
+                <figcaption class="sr-only">{{ e($product->name) }}</figcaption>
+            </figure>
 
         </div>
  <span class="ribbons">
