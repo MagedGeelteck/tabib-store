@@ -15,11 +15,32 @@
                         <!-- Slick Image Slider -->
                         <div class="product-image-slider product-image-gallery" id="product-image-gallery"
                              data-pswp-uid="3">
+                            @php
+                                // Ensure we have at least one image
+                                if (empty($productImages)) {
+                                    $productImages = [RvMedia::getDefaultImage()];
+                                }
+                            @endphp
                             @foreach ($productImages as $img)
+                                @php
+                                    // Prefer compressed/detail variants; fall back to original if missing
+                                    $large = RvMedia::getImageUrl($img, 'large', false, RvMedia::getDefaultImage());
+                                    $medium = RvMedia::getImageUrl($img, 'product_detail', false, RvMedia::getDefaultImage());
+                                    $small = RvMedia::getImageUrl($img, 'product', false, RvMedia::getDefaultImage());
+                                    $thumb = RvMedia::getImageUrl($img, 'thumb', false, RvMedia::getDefaultImage());
+
+                                    // Choose a placeholder src (very small inline or placeholder helper)
+                                    $placeholder = image_placeholder($small);
+                                    // Use largest available as zoom image
+                                    $zoomImage = $large ?: $medium ?: $small ?: $thumb;
+                                @endphp
                                 <div class="item">
-                                    <img src="{{ RvMedia::getImageUrl($img, 'product_detail') }}"
-                                         data-zoom-image="{{ RvMedia::getImageUrl($img, 'product_detail') }}"
-                                         alt="{{ $product->name }}"/>
+                                    <img class="lazyload"
+                                         src="{{ $placeholder }}"
+                                         data-src="{{ $medium ?: $large ?: $small }}"
+                                         data-srcset="{{ $large }} 1024w, {{ $medium }} 640w, {{ $small }} 320w"
+                                         data-zoom-image="{{ $zoomImage }}"
+                                         alt="{{ e($product->name) }}" />
                                 </div>
                             @endforeach
                         </div>
@@ -28,9 +49,11 @@
                     <!-- Slick Thumb Slider -->
                     <div class="product-image-slider-thumbnails">
                         @foreach ($productImages as $thumb)
+                            @php
+                                $t = RvMedia::getImageUrl($thumb, 'thumb', false, RvMedia::getDefaultImage());
+                            @endphp
                             <div class="item">
-                                <img src="{{ RvMedia::getImageUrl($thumb,'product') }}"
-                                     alt="{{ $product->name }}"/>
+                                <img class="lazyload" src="{{ image_placeholder($t) }}" data-src="{{ $t }}" alt="{{ e($product->name) }}"/>
                             </div>
                         @endforeach
                     </div>
