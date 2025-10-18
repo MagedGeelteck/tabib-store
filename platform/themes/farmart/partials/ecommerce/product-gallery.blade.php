@@ -35,9 +35,9 @@
                     <div class="img-fluid-eq__dummy"></div>
                     <div class="img-fluid-eq__wrap">
                         <img
-                            class="mx-auto lazyload"
+                            class="mx-auto"
                             title="{{ $product->name }}"
-                            src="{{ $imgUrl }}"
+                            src="{{ image_placeholder($img) }}"
                             data-src="{{ $imgUrl }}"
                             data-lazy="{{ $imgUrl }}"
                             @if($width && $height) width="{{ $width }}" height="{{ $height }}" @endif
@@ -56,16 +56,31 @@
             @php
                 $originalThumb = RvMedia::getImageUrl($img, null, false, RvMedia::getDefaultImage());
                 $thumbFilename = basename(parse_url($originalThumb, PHP_URL_PATH));
-                $compressedThumbRelative = "storage/compressed-images/products-images/{$identifier}/{$thumbFilename}";
-                $compressedThumbPath = public_path($compressedThumbRelative);
-                $t = RvMedia::getImageUrl($img, 'thumb');
-                if (file_exists($compressedThumbPath)) {
-                    $t = asset($compressedThumbRelative);
+                // Try multiple common extensions in case compressed files were generated with a different extension
+                $candidates = [];
+                $candidates[] = $thumbFilename;
+                $ext = pathinfo($thumbFilename, PATHINFO_EXTENSION);
+                $nameOnly = pathinfo($thumbFilename, PATHINFO_FILENAME);
+                foreach (['jpg', 'jpeg', 'png', 'webp'] as $tryExt) {
+                    $candidates[] = $nameOnly . '.' . $tryExt;
                 }
+
+                $t = RvMedia::getImageUrl($img, 'thumb');
+                $found = false;
+                foreach (array_unique($candidates) as $candidate) {
+                    $compressedThumbRelative = "storage/compressed-images/products-images/{$identifier}/{$candidate}";
+                    $compressedThumbPath = public_path($compressedThumbRelative);
+                    if (file_exists($compressedThumbPath)) {
+                        $t = asset($compressedThumbRelative);
+                        $found = true;
+                        break;
+                    }
+                }
+                // leave $t as RvMedia thumb if none of the compressed files found
             @endphp
             <div class="item">
                 <div class="border p-1 m-1">
-                    <img class="mx-auto lazyload" title="{{ $product->name }}" src="{{ image_placeholder($t) }}" data-src="{{ $t }}" data-lazy="{{ $t }}">
+                    <img class="mx-auto" title="{{ $product->name }}" src="{{ image_placeholder($t) }}" data-src="{{ $t }}" data-lazy="{{ $t }}">
                 </div>
             </div>
         @empty
