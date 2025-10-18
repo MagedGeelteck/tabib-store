@@ -19,7 +19,8 @@ DB::table('ec_products')->where('id',$product->id)->update(['image'=>$product->i
         @endif
 
         {!! Form::open(['route' => ['public.checkout.process', $token], 'class' => 'checkout-form payment-checkout-form', 'id' => 'checkout-form']) !!}
-            <input type="hidden" name="checkout-token" id="checkout-token" value="{{ $token }}">
+        @csrf
+        <input type="hidden" name="checkout-token" id="checkout-token" value="{{ $token }}">
 
             <div class="container" id="main-checkout-product-info">
                 <div class="row">
