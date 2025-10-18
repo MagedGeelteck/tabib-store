@@ -23,24 +23,54 @@
                             @endphp
                             @foreach ($productImages as $img)
                                 @php
-                                    // Prefer compressed/detail variants; fall back to original if missing
-                                    $large = RvMedia::getImageUrl($img, 'large', false, RvMedia::getDefaultImage());
-                                    $medium = RvMedia::getImageUrl($img, 'product_detail', false, RvMedia::getDefaultImage());
-                                    $small = RvMedia::getImageUrl($img, 'product', false, RvMedia::getDefaultImage());
+                                    // Assumption: compressed images are stored at
+                                    // /storage/compressed-images/products-images/{identifier}/{filename}
+                                    // where {identifier} is best-effort: try SKU, then ID.
+                                    $identifier = $product->sku ?: $product->id;
+                                    $originalUrl = RvMedia::getImageUrl($img, null, false, RvMedia::getDefaultImage());
+                                    $filename = basename(parse_url($originalUrl, PHP_URL_PATH));
+                                    $compressedRelative = "storage/compressed-images/products-images/{$identifier}/{$filename}";
+                                    $compressedPath = public_path($compressedRelative);
+
+                                    $useCompressed = false;
+                                    $compressedUrl = '';
+                                    $width = $height = null;
+                                    if (file_exists($compressedPath)) {
+                                        $useCompressed = true;
+                                        $compressedUrl = asset($compressedRelative);
+                                        // try to get dimensions to reduce CLS if available
+                                        try {
+                                            $size = @getimagesize($compressedPath);
+                                            if (!empty($size)) {
+                                                $width = $size[0];
+                                                $height = $size[1];
+                                            }
+                                        } catch (\Exception $e) {
+                                            // ignore
+                                        }
+                                    }
+
+                                    // Fallback to RvMedia variants when compressed not available
+                                    $large = $useCompressed ? $compressedUrl : RvMedia::getImageUrl($img, 'large', false, RvMedia::getDefaultImage());
+                                    $medium = $useCompressed ? $compressedUrl : RvMedia::getImageUrl($img, 'product_detail', false, RvMedia::getDefaultImage());
+                                    $small = $useCompressed ? $compressedUrl : RvMedia::getImageUrl($img, 'product', false, RvMedia::getDefaultImage());
                                     $thumb = RvMedia::getImageUrl($img, 'thumb', false, RvMedia::getDefaultImage());
 
-                                    // Choose a placeholder src (very small inline or placeholder helper)
+                                    // placeholder (very small inline or helper)
                                     $placeholder = image_placeholder($small);
-                                    // Use largest available as zoom image
                                     $zoomImage = $large ?: $medium ?: $small ?: $thumb;
                                 @endphp
                                 <div class="item">
-                                    <img class="lazyload"
-                                         src="{{ $placeholder }}"
-                                         data-src="{{ $medium ?: $large ?: $small }}"
-                                         data-srcset="{{ $large }} 1024w, {{ $medium }} 640w, {{ $small }} 320w"
-                                         data-zoom-image="{{ $zoomImage }}"
-                                         alt="{{ e($product->name) }}" />
+                                    <img
+                                        @if ($loop->first) loading="eager" fetchpriority="high" @else loading="lazy" @endif
+                                        class="lazyload"
+                                        src="{{ $placeholder }}"
+                                        data-src="{{ $medium ?: $large ?: $small }}"
+                                        data-srcset="{{ $large }} 1024w, {{ $medium }} 640w, {{ $small }} 320w"
+                                        @if($width && $height) width="{{ $width }}" height="{{ $height }}" @endif
+                                        decoding="async"
+                                        data-zoom-image="{{ $zoomImage }}"
+                                        alt="{{ e($product->name) }}" />
                                 </div>
                             @endforeach
                         </div>
@@ -50,7 +80,14 @@
                     <div class="product-image-slider-thumbnails">
                         @foreach ($productImages as $thumb)
                             @php
+                                $originalThumb = RvMedia::getImageUrl($thumb, null, false, RvMedia::getDefaultImage());
+                                $thumbFilename = basename(parse_url($originalThumb, PHP_URL_PATH));
+                                $compressedThumbRelative = "storage/compressed-images/products-images/{$identifier}/{$thumbFilename}";
+                                $compressedThumbPath = public_path($compressedThumbRelative);
                                 $t = RvMedia::getImageUrl($thumb, 'thumb', false, RvMedia::getDefaultImage());
+                                if (file_exists($compressedThumbPath)) {
+                                    $t = asset($compressedThumbRelative);
+                                }
                             @endphp
                             <div class="item">
                                 <img class="lazyload" src="{{ image_placeholder($t) }}" data-src="{{ $t }}" alt="{{ e($product->name) }}"/>
