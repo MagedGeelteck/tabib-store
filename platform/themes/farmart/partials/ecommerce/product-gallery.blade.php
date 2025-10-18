@@ -11,7 +11,6 @@
                 // Candidate relative paths (in priority order). First prefer compressed images,
                 // then fall back to the original uploads location(s).
                 $candidates = [
-                    "storage/compressed-images/products-images/{$identifier}/{$filename}",
                     "storage/products-images/{$identifier}/{$filename}",
                     // some installs store uploads without per-sku folders
                     "storage/products-images/{$filename}",
@@ -83,7 +82,7 @@
                 $thumbUrl = RvMedia::getImageUrl($img, 'thumb');
                 foreach (array_unique($candidates) as $candidate) {
                     $tryList = [
-                        "storage/compressed-images/products-images/{$identifier}/{$candidate}",
+                        "storage/images/products-images/{$identifier}/{$candidate}",
                         "storage/products-images/{$identifier}/{$candidate}",
                         "storage/products-images/{$candidate}",
                         "public/storage/products-images/{$identifier}/{$candidate}",
@@ -93,7 +92,7 @@
                         $p = public_path($rel);
                         if (file_exists($p)) {
                             $thumbUrl = asset($rel);
-                            break 2;
+                            break 2;    
                         }
                     }
                 }
@@ -113,7 +112,7 @@
 @php
     $originalUrl = RvMedia::getImageUrl($img, null, false, RvMedia::getDefaultImage());
     $filename = basename(parse_url($originalUrl, PHP_URL_PATH));
-    $compressedRelative = "storage/compressed-images/products-images/{$identifier}/{$filename}";
+    $compressedRelative = "storage/products-images/{$identifier}/{$filename}";
     $compressedPath = public_path($compressedRelative);
     $modalSrc = file_exists($compressedPath) ? asset($compressedRelative) : RvMedia::getImageUrl($img, 'thumb');
 @endphp
