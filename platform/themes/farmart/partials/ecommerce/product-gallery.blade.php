@@ -35,9 +35,9 @@
                     <div class="img-fluid-eq__dummy"></div>
                     <div class="img-fluid-eq__wrap">
                         <img
-                            class="mx-auto"
+                            class="mx-auto lazyload"
                             title="{{ $product->name }}"
-                            src="{{ image_placeholder($img) }}"
+                            src="{{ $imgUrl }}"
                             data-src="{{ $imgUrl }}"
                             data-lazy="{{ $imgUrl }}"
                             @if($width && $height) width="{{ $width }}" height="{{ $height }}" @endif
@@ -65,7 +65,7 @@
             @endphp
             <div class="item">
                 <div class="border p-1 m-1">
-                    <img class="mx-auto" title="{{ $product->name }}" src="{{ image_placeholder($t) }}" data-src="{{ $t }}" data-lazy="{{ $t }}">
+                    <img class="mx-auto lazyload" title="{{ $product->name }}" src="{{ image_placeholder($t) }}" data-src="{{ $t }}" data-lazy="{{ $t }}">
                 </div>
             </div>
         @empty
