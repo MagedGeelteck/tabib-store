@@ -7,9 +7,31 @@
 <html lang="en">
 <!--<![endif]-->
 <head>
-    {{-- Always output normalized <title> and canonical link at the top of <head> for SEO robustness --}}
-    <title>{{ e($title) }}</title>
-    <link rel="canonical" href="{{ rtrim($canonical, '/') ?: 'https://tabib-jo.com' }}">
+    {{-- Compute safe fallbacks for title and canonical so templates that include this
+         layout before our normalization logic don't trigger undefined variable errors. --}}
+    @php
+        // Safe title: prefer already-set $title, else SeoHelper, page_title(), or site name
+        $safeTitle = null;
+        try {
+            if (isset($title) && $title) {
+                $safeTitle = $title;
+            } elseif (class_exists(\Botble\SeoHelper\Facades\SeoHelper::class)) {
+                $safeTitle = \Botble\SeoHelper\Facades\SeoHelper::getTitle();
+            } elseif (function_exists('page_title')) {
+                $safeTitle = page_title()->getTitle();
+            } else {
+                $safeTitle = setting('admin_title', config('core.base.general.base_name'));
+            }
+        } catch (\Exception $e) {
+            $safeTitle = setting('admin_title', config('core.base.general.base_name'));
+        }
+
+        // Safe canonical: if $canonical is set use it, otherwise use current URL
+        $safeCanonical = isset($canonical) ? $canonical : (request() ? url()->full() : 'https://tabib-jo.com');
+    @endphp
+
+    <title>{{ e($safeTitle) }}</title>
+    <link rel="canonical" href="{{ rtrim($safeCanonical, '/') ?: 'https://tabib-jo.com' }}">
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
