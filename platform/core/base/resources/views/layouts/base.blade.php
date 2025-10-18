@@ -167,7 +167,7 @@
                         }
                     @endphp
     @endphp
-    @php
+    @php 
         // Build a canonical URL for crawlers.
         // Priority: use SeoHelper meta URL if set (page-specific canonical), otherwise use current URL.
         // Always force canonical host/scheme to the canonical host to avoid www/http duplicates.
