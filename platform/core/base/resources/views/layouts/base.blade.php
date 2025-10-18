@@ -42,8 +42,8 @@
         $locale = app()->getLocale();
         $isAdmin = request()->is('admin*') || request()->routeIs('admin.*');
 
-        // If this is an admin page, skip the front-end SEO normalization to avoid side-effects.
         if ($isAdmin) {
+            // Admin pages: keep existing title/description and avoid normalization.
             try {
                 if (class_exists(\Botble\SeoHelper\Facades\SeoHelper::class)) {
                     $title = \Botble\SeoHelper\Facades\SeoHelper::getTitle() ?: page_title()->getTitle();
@@ -57,7 +57,7 @@
                 $description = null;
             }
         } else {
-            // Always include the normalization helper for front-end pages
+            // Frontend pages: run SEO normalization
             require_once base_path('app/Helpers/SeoHelperNormalize.php');
             try {
                 if (class_exists(\Botble\SeoHelper\Facades\SeoHelper::class)) {
@@ -65,107 +65,87 @@
                     $rawTitle = $existingTitle ?: page_title()->getTitle();
                     $description = \Botble\SeoHelper\Facades\SeoHelper::getDescription();
                 } else {
-                    @php
-                        // Determine whether current request is admin area. If so, skip all SEO normalization to avoid side-effects on admin pages.
-                        $isAdmin = request()->is('admin*') || request()->routeIs('admin.*');
+                    $rawTitle = page_title()->getTitle();
+                    $description = null;
+                }
+            } catch (\Exception $e) {
+                $rawTitle = page_title()->getTitle();
+                $description = null;
+            }
 
-                        $siteName = setting('admin_title', config('core.base.general.base_name'));
+            $routeName = optional(request()->route())->getName();
+            $locale = app()->getLocale();
+            $title = normalize_seo_title($rawTitle, $siteName, $routeName, $locale);
 
-                        if ($isAdmin) {
-                            // For admin pages, keep titles/descriptions as-is and don't include normalization helper.
-                            $title = $safeTitle ?: $siteName;
-                            $description = null;
-                        } else {
-                            // Frontend: include normalization helper and run normalization logic.
-                            // Always include the normalization helper
-                            require_once base_path('app/Helpers/SeoHelperNormalize.php');
-                            try {
-                                if (class_exists(\Botble\SeoHelper\Facades\SeoHelper::class)) {
-                                    $existingTitle = \Botble\SeoHelper\Facades\SeoHelper::getTitle();
-                                    $rawTitle = $existingTitle ?: page_title()->getTitle();
-                                    $description = \Botble\SeoHelper\Facades\SeoHelper::getDescription();
-                                } else {
-                                    $rawTitle = page_title()->getTitle();
-                                    $description = null;
-                                }
-                            } catch (\Exception $e) {
-                                $rawTitle = page_title()->getTitle();
-                                $description = null;
-                            }
-                            $routeName = optional(request()->route())->getName();
-                            $locale = app()->getLocale();
-                            $title = normalize_seo_title($rawTitle, $siteName, $routeName, $locale);
+            // Keywords & phrasing
+            $keywords = [
+                'online pharmacy', 'pharmacy', 'Tabib', 'Jordan', 'Amman',
+                'medicines', 'buy medicines', 'health products', 'medical supplies', 'vitamins', 'supplements',
+                'sugar-free', 'keto', 'diet', 'gluten free', 'lactose free', 'sports nutrition', 'high protein', 'low protein',
+                'صيدلية', 'ادوية', 'منتجات صحية', 'منتجات غذائية خاصة', 'خالي سكر', 'الرياضيين', 'دايت', 'كيتو',
+                'خالي من الجلوتين', 'خالي من اللاكتوز', 'نباتي', 'نباتية', 'عالية البروتين', 'قليل البروتين', 'عمان', 'الاردن'
+            ];
 
-                            // A broader, practical set of keywords and natural-language fallbacks.
-                            $keywords = [
-                                'online pharmacy', 'pharmacy', 'Tabib', 'Jordan', 'Amman',
-                                'medicines', 'buy medicines', 'health products', 'medical supplies', 'vitamins', 'supplements',
-                                'sugar-free', 'keto', 'diet', 'gluten free', 'lactose free', 'sports nutrition', 'high protein', 'low protein',
-                                'صيدلية', 'ادوية', 'منتجات صحية', 'منتجات غذائية خاصة', 'خالي سكر', 'الرياضيين', 'دايت', 'كيتو',
-                                'خالي من الجلوتين', 'خالي من اللاكتوز', 'نباتي', 'نباتية', 'عالية البروتين', 'قليل البروتين', 'عمان', 'الاردن'
-                            ];
+            $hasKeyword = false;
+            foreach ($keywords as $k) {
+                if (!empty($k) && stripos($title, $k) !== false) {
+                    $hasKeyword = true;
+                    break;
+                }
+            }
 
-                            $hasKeyword = false;
-                            foreach ($keywords as $k) {
-                                if (!empty($k) && stripos($title, $k) !== false) {
-                                    $hasKeyword = true;
-                                    break;
-                                }
-                            }
+            $containsArabic = preg_match('/[\x{0600}-\x{06FF}]/u', $title) || app()->getLocale() === 'ar';
 
-                            $containsArabic = preg_match('/[\x{0600}-\x{06FF}]/u', $title) || app()->getLocale() === 'ar';
+            if (request()->routeIs('public.index')) {
+                $primaryPhrase = $containsArabic ? 'محل مختص بالاغذية الخاصة' : 'Online Pharmacy & Health Products';
+            } elseif (request()->routeIs('public.products') || request()->routeIs('public.product')) {
+                $primaryPhrase = $containsArabic ? 'منتجات صحية في الأردن' : 'Health Products in Jordan';
+            } elseif (request()->routeIs('public.cart') || request()->routeIs('public.profile')) {
+                $primaryPhrase = $containsArabic ? 'منتجات صحية، أدوية، توصيل سريع' : 'Medicines, Health Products, Fast Delivery';
+            } else {
+                $primaryPhrase = $containsArabic ? 'منتجات صحية' : 'Health Products';
+            }
 
-                            if (request()->routeIs('public.index')) {
-                                $primaryPhrase = $containsArabic ? 'محل مختص بالاغذية الخاصة' : 'Online Pharmacy & Health Products';
-                            } elseif (request()->routeIs('public.products') || request()->routeIs('public.product')) {
-                                $primaryPhrase = $containsArabic ? 'منتجات صحية في الأردن' : 'Health Products in Jordan';
-                            } elseif (request()->routeIs('public.cart') || request()->routeIs('public.profile')) {
-                                $primaryPhrase = $containsArabic ? 'منتجات صحية، أدوية، توصيل سريع' : 'Medicines, Health Products, Fast Delivery';
-                            } else {
-                                $primaryPhrase = $containsArabic ? 'منتجات صحية' : 'Health Products';
-                            }
+            if (! $hasKeyword || mb_strlen(strip_tags($title)) < 30) {
+                if ($title && stripos($title, $primaryPhrase) === false) {
+                    $title = $primaryPhrase . ' — ' . trim($title);
+                }
+                if (stripos($title, $siteName) === false) {
+                    $title = $title . ' | ' . $siteName;
+                }
+            } else {
+                if (stripos($title, $siteName) === false) {
+                    $title = trim($title) . ' | ' . $siteName;
+                }
+            }
 
-                            if (! $hasKeyword || mb_strlen(strip_tags($title)) < 30) {
-                                if ($title && stripos($title, $primaryPhrase) === false) {
-                                    $title = $primaryPhrase . ' — ' . trim($title);
-                                }
-                                if (stripos($title, $siteName) === false) {
-                                    $title = $title . ' | ' . $siteName;
-                                }
-                            } else {
-                                if (stripos($title, $siteName) === false) {
-                                    $title = trim($title) . ' | ' . $siteName;
-                                }
-                            }
+            if (empty($description)) {
+                $primaryKeywordsEn = 'Online pharmacy, health products, fast delivery in Amman';
+                $primaryKeywordsAr = 'صيدلية أونلاين، منتجات صحية، توصيل سريع في عمان';
 
-                            if (empty($description)) {
-                                $primaryKeywordsEn = 'Online pharmacy, health products, fast delivery in Amman';
-                                $primaryKeywordsAr = 'صيدلية أونلاين، منتجات صحية، توصيل سريع في عمان';
+                $containsArabic = preg_match('/[\x{0600}-\x{06FF}]/u', request()->getPathInfo()) || app()->getLocale() === 'ar';
 
-                                $containsArabic = preg_match('/[\x{0600}-\x{06FF}]/u', request()->getPathInfo()) || app()->getLocale() === 'ar';
+                $arabicSiteDescription = 'محل مختص بالاغذية الخاصة: منتجات (خالي سكر، الرياضيين، دايت الكيتو، خالي من الجلوتين، خالي من اللاكتوز، النباتية، عالية البروتين، قليل البروتين) Tabib Store';
 
-                                $arabicSiteDescription = 'محل مختص بالاغذية الخاصة: منتجات (خالي سكر، الرياضيين، دايت الكيتو، خالي من الجلوتين، خالي من اللاكتوز، النباتية، عالية البروتين، قليل البروتين) Tabib Store';
+                if (request()->routeIs('public.index')) {
+                    if ($containsArabic) {
+                        $description = "{$primaryKeywordsAr} — {$arabicSiteDescription} " . $siteName;
+                    } else {
+                        $description = "{$primaryKeywordsEn}. Trusted medicines and health products at {$siteName}. Fast delivery across Jordan.";
+                    }
+                } else {
+                    if ($containsArabic) {
+                        $description = "{$primaryKeywordsAr} — {$arabicSiteDescription} " . $siteName;
+                    } else {
+                        $description = "{$primaryKeywordsEn}. Shop trusted medicines and medical supplies at {$siteName}. Fast delivery in Jordan.";
+                    }
+                }
 
-                                if (request()->routeIs('public.index')) {
-                                    if ($containsArabic) {
-                                        $description = "{$primaryKeywordsAr} — {$arabicSiteDescription} " . $siteName;
-                                    } else {
-                                        $description = "{$primaryKeywordsEn}. Trusted medicines and health products at {$siteName}. Fast delivery across Jordan.";
-                                    }
-                                } else {
-                                    if ($containsArabic) {
-                                        $description = "{$primaryKeywordsAr} — {$arabicSiteDescription} " . $siteName;
-                                    } else {
-                                        $description = "{$primaryKeywordsEn}. Shop trusted medicines and medical supplies at {$siteName}. Fast delivery in Jordan.";
-                                    }
-                                }
-
-                                if (mb_strlen($description) > 160) {
-                                    $description = mb_substr($description, 0, 157) . '...';
-                                }
-                            }
-                        }
-                    @endphp
+                if (mb_strlen($description) > 160) {
+                    $description = mb_substr($description, 0, 157) . '...';
+                }
+            }
+        }
     @endphp
     @php 
         // Build a canonical URL for crawlers.
