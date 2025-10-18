@@ -9,11 +9,21 @@
                 $compressedRelative = "storage/compressed-images/products-images/{$identifier}/{$filename}";
                 $compressedPath = public_path($compressedRelative);
                 $thumb = RvMedia::getImageUrl($product->image, 'thumb', false, RvMedia::getDefaultImage());
+                $thumbWidth = $thumbHeight = null;
                 if (file_exists($compressedPath)) {
                     $thumb = asset($compressedRelative);
+                    try {
+                        $size = @getimagesize($compressedPath);
+                        if (!empty($size)) {
+                            $thumbWidth = $size[0];
+                            $thumbHeight = $size[1];
+                        }
+                    } catch (\Exception $e) {
+                        // ignore
+                    }
                 }
             @endphp
-            <img class="item-thumb img-thumbnail img-rounded lazyload" src="{{ image_placeholder($thumb) }}" data-src="{{ $thumb }}" alt="{{ $product->original_product->name }}">
+            <img class="item-thumb img-thumbnail img-rounded" src="{{ $thumb }}" alt="{{ $product->original_product->name }}" decoding="async" @if(!empty($thumbWidth) && !empty($thumbHeight)) width="{{ $thumbWidth }}" height="{{ $thumbHeight }}" @endif>
             <span class="checkout-quantity">{{ $cartItem->qty }}</span>
         </div>
     </div>
