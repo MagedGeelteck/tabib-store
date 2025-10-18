@@ -10,17 +10,40 @@ $product->image=$product->images[0] ?? RvMedia::getDefaultImage();
         <div class="img-fluid-eq__wrap hover-effect">
             <figure class="text-center">
                 @php
-                    // Prefer a compressed thumbnail variant for product listings to reduce weight and improve LCP
+                    // Prefer a compressed thumbnail file in public/storage/compressed-images/products-images/{identifier}/{filename}
+                    $identifier = $product->sku ?: $product->id;
+                    $originalUrl = RvMedia::getImageUrl($product->image, null, false, RvMedia::getDefaultImage());
+                    $filename = basename(parse_url($originalUrl, PHP_URL_PATH));
+                    $compressedRelative = "storage/compressed-images/products-images/{$identifier}/{$filename}";
+                    $compressedPath = public_path($compressedRelative);
                     $thumbUrl = RvMedia::getImageUrl($product->image, 'product-thumbnail', false, RvMedia::getDefaultImage());
-                    // Fallback to 'thumb' if the named variant is not available (RvMedia will typically return original if variant missing)
-                    if (! $thumbUrl) {
-                        $thumbUrl = RvMedia::getImageUrl($product->image, 'thumb', false, RvMedia::getDefaultImage());
+                    // prefer compressed file if present
+                    if (file_exists($compressedPath)) {
+                        $thumbUrl = asset($compressedRelative);
+                        // try to get dimensions to reduce CLS
+                        try {
+                            $size = @getimagesize($compressedPath);
+                            if (!empty($size)) {
+                                $thumbWidth = $size[0];
+                                $thumbHeight = $size[1];
+                            }
+                        } catch (\Exception $e) {
+                            // ignore
+                        }
+                    } else {
+                        // Fallback to 'thumb' if the named variant is not available
+                        if (! $thumbUrl) {
+                            $thumbUrl = RvMedia::getImageUrl($product->image, 'thumb', false, RvMedia::getDefaultImage());
+                        }
                     }
                 @endphp
                 <img class="lazyload product-thumbnail__img"
                     src="{{ image_placeholder($thumbUrl) }}"
                     data-src="{{ $thumbUrl }}"
-                    alt="{{ $product->name }}" style="max-height:299px; width:100%; object-fit:contain"> 
+                    alt="{{ $product->name }}"
+                    style="max-height:299px; width:100%; object-fit:contain"
+                    decoding="async"
+                    @if(!empty($thumbWidth) && !empty($thumbHeight)) width="{{ $thumbWidth }}" height="{{ $thumbHeight }}" @endif>
                 <figcaption class="sr-only">{{ e($product->name) }}</figcaption>
             </figure>
 
