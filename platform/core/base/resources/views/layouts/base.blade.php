@@ -7,99 +7,46 @@
 <html lang="en">
 <!--<![endif]-->
 <head>
-    {{-- Compute safe fallbacks for title and canonical so templates that include this
-         layout before our normalization logic don't trigger undefined variable errors. --}}
-    @php
-        // Safe title: prefer already-set $title, else SeoHelper, page_title(), or site name
-        $safeTitle = null;
-        try {
-            if (isset($title) && $title) {
-                $safeTitle = $title;
-            } elseif (class_exists(\Botble\SeoHelper\Facades\SeoHelper::class)) {
-                $safeTitle = \Botble\SeoHelper\Facades\SeoHelper::getTitle();
-            } elseif (function_exists('page_title')) {
-                $safeTitle = page_title()->getTitle();
-            } else {
-                $safeTitle = setting('admin_title', config('core.base.general.base_name'));
-            }
-        } catch (\Exception $e) {
-            $safeTitle = setting('admin_title', config('core.base.general.base_name'));
-        }
-
-        // Safe canonical: if $canonical is set use it, otherwise use current URL
-        $safeCanonical = isset($canonical) ? $canonical : (request() ? url()->full() : 'https://tabib-jo.com');
-    @endphp
-
-    <title>{{ e($safeTitle) }}</title>
-    <link rel="canonical" href="{{ rtrim($safeCanonical, '/') ?: 'https://tabib-jo.com' }}">
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-    @php
-        // Detect admin area early so we can avoid running front-end SEO normalization during admin requests.
-        $siteName = setting('admin_title', config('core.base.general.base_name'));
-        $routeName = optional(request()->route())->getName();
-        $locale = app()->getLocale();
-        $isAdmin = request()->is('admin*') || request()->routeIs('admin.*');
+    <title>{{ page_title()->getTitle() }}</title>
 
-        if ($isAdmin) {
-            // Admin pages: keep existing title/description and avoid normalization.
-            try {
-                if (class_exists(\Botble\SeoHelper\Facades\SeoHelper::class)) {
-                    $title = \Botble\SeoHelper\Facades\SeoHelper::getTitle() ?: page_title()->getTitle();
-                    $description = \Botble\SeoHelper\Facades\SeoHelper::getDescription();
-                } else {
-                    $title = page_title()->getTitle();
-                    $description = null;
-                }
-            } catch (\Exception $e) {
-                $title = page_title()->getTitle();
-                $description = null;
-            }
-        } else {
-            // Frontend pages: run SEO normalization
-            require_once base_path('app/Helpers/SeoHelperNormalize.php');
-            try {
-                if (class_exists(\Botble\SeoHelper\Facades\SeoHelper::class)) {
-                    $existingTitle = \Botble\SeoHelper\Facades\SeoHelper::getTitle();
-                    $rawTitle = $existingTitle ?: page_title()->getTitle();
-                    $description = \Botble\SeoHelper\Facades\SeoHelper::getDescription();
-                } else {
-                    $rawTitle = page_title()->getTitle();
-                    $description = null;
-                }
-            } catch (\Exception $e) {
-                $rawTitle = page_title()->getTitle();
-                $description = null;
-            }
+    <meta name="robots" content="noindex,follow"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    @if (setting('admin_logo') || config('core.base.general.logo'))
+        <meta property="og:image" content="{{ setting('admin_logo') ? RvMedia::getImageUrl(setting('admin_logo')) : url(config('core.base.general.logo')) }}">
+    @endif
+    <meta name="description" content="{{ strip_tags(trans('core/base::layouts.copyright', ['year' => now()->format('Y'), 'company' => setting('admin_title', config('core.base.general.base_name')), 'version' => get_cms_version()])) }}">
+    <meta property="og:description" content="{{ strip_tags(trans('core/base::layouts.copyright', ['year' => now()->format('Y'), 'company' => setting('admin_title', config('core.base.general.base_name')), 'version' => get_cms_version()])) }}">
 
-            $routeName = optional(request()->route())->getName();
-            $locale = app()->getLocale();
-            $title = normalize_seo_title($rawTitle, $siteName, $routeName, $locale);
+    @if (setting('admin_favicon') || config('core.base.general.favicon'))
+        <link rel="icon shortcut" href="{{ setting('admin_favicon') ? RvMedia::getImageUrl(setting('admin_favicon'), 'thumb') : url(config('core.base.general.favicon')) }}">
+    @endif
 
-            // Keywords & phrasing
-            $keywords = [
-                @php
-                    // Minimal SEO: prefer SeoHelper rendering if available; otherwise fall back to a simple canonical tag.
-                    try {
-                        if (class_exists(\Botble\SeoHelper\Facades\SeoHelper::class)) {
-                            // Let SeoHelper output title/meta/og tags if it's available
-                            echo \Botble\SeoHelper\Facades\SeoHelper::render();
-                            try {
-                                $metaUrl = \Botble\SeoHelper\Facades\SeoHelper::meta()->getUrl();
-                            } catch (\Exception $e) {
-                                $metaUrl = null;
-                            }
-                        } else {
-                            $metaUrl = null;
-                        }
-                    } catch (\Exception $e) {
-                        $metaUrl = null;
-                    }
+    <link rel="preconnect" href="{{ BaseHelper::getGoogleFontsURL() }}">
+    <link href="{{ BaseHelper::getGoogleFontsURL() }}/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
 
-                    $canonical = isset($canonical) ? $canonical : ($metaUrl ?: url()->full());
-                @endphp
-                <link rel="canonical" href="{{ rtrim($canonical, '/') ?: 'https://tabib-jo.com' }}">
+    {!! Assets::renderHeader(['core']) !!}
+
+    <script>
+        window.siteUrl = "{{ url('') }}";
+        window.siteEditorLocale = "{{ apply_filters('cms_site_editor_locale', App::getLocale()) }}";
+    </script>
+
+    @if (BaseHelper::adminLanguageDirection() == 'rtl')
+        <link rel="stylesheet" href="{{ asset('vendor/core/core/base/css/rtl.css') }}">
+    @endif
+
+    @yield('head')
+
+    @stack('header')
+    
+    <style>
+    .language-header{
+        display:none;
+    }
     .buttons-reload{
       max-width:150px;
     }
@@ -109,32 +56,12 @@
 *{
     font-size:16px;
 }    
-    /* Critical CSS for above-the-fold: reserve hero/slider space to avoid layout shift
-       - Gives slider a stable aspect ratio so the LCP image can be loaded and painted
-       without causing a reflow. object-fit keeps the image cover-style.
-    */
-    .section-slides-wrapper,
-    .slide-item__image {
-        width: 100%;
-        aspect-ratio: 16 / 9;
-        min-height: 220px; /* fallback for very old browsers */
-        overflow: hidden;
-        display: block;
-        background-color: #f6f6f6; /* neutral background while image loads */
-    }
-
-    .slide-item__image img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-    }
-
+    
     </style>
-    {{-- Allow themes/packages to inject additional head HTML (e.g. SeoHelper::render()) --}}
-    {!! apply_filters(BASE_FILTER_HEADER_LAYOUT_TEMPLATE, null) !!}
 </head>
-<body @if (BaseHelper::adminLanguageDirection() == 'rtl') dir="rtl" @endif class="@yield('body-class', 'page-sidebar-closed-hide-logo page-container-bg-solid') {{ session()->get('sidebar-menu-toggle') ? 'page-sidebar-closed' : '' }}" style="@yield('body-style')">
+<body @if (BaseHelper::adminLanguageDirection() == 'rtl') dir="rtl" @endif class="@yield('body-class', 'page-sidebar-closed-hide-logo page-content-white page-container-bg-solid') {{ session()->get('sidebar-menu-toggle') ? 'page-sidebar-closed' : '' }}" style="@yield('body-style')">
+
+    {!! apply_filters(BASE_FILTER_HEADER_LAYOUT_TEMPLATE, null) !!}
 
     <div id="app">
         @yield('page')
